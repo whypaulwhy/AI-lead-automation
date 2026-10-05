@@ -3,9 +3,9 @@
 | Phase | Status | Finished |
 |---|---|---|
 | 0. Preflight and repo skeleton | done | 2026-10-05 |
-| 1. n8n running locally | in progress: waiting on Prit's steps | |
-| 2. Accounts and credentials | not started | |
-| 3. Landing page | not started | |
+| 1. n8n running locally | done | 2026-10-05 |
+| 2. Accounts and credentials | in progress: Prit creates accounts | |
+| 3. Landing page | in progress (parallel with Phase 2, allowed by Section 12) | |
 | 4. Claude contract, logic and tests | not started | |
 | 5. Workflows | not started | |
 | 6. Error handling and failure drills | not started | |
@@ -38,21 +38,21 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: `npm test` runs; `check:secrets` passes; `git status` clean
 - [x] 0.2 routine
 
-## Phase 1 checklist (in progress)
+## Phase 1 checklist (done)
 
 - [x] T1 latest stable is 2.41.7 (registry digest and GitHub release); pinned 2.41.6 in `.env` and README instead (see DECISIONS)
 - [x] T2 `.env` created from `.env.example`; `N8N_ENCRYPTION_KEY` and `AI_BRIDGE_TOKEN` generated without display
 - [x] T3 `docker-compose.yml` following n8n's current Docker docs
 - [x] T4 `npm run n8n:up`; `/healthz` returns 200; container runs n8n 2.41.6
 - [x] Added: AI bridge built. Health 200, wrong token 401, request reaches Claude Code (fails only on the expired CLI login), n8n container reaches the bridge (200)
-- [ ] Prit 1: create the n8n owner account
-- [ ] Prit 2: create an n8n API key and paste it into `.env` as `N8N_API_KEY`
-- [ ] Prit (added): run `claude setup-token` and paste the token into `.env` as `CLAUDE_CODE_OAUTH_TOKEN`
-- [ ] Prit 3 (optional): register n8n-mcp
-- [ ] Exit: `GET /api/v1/workflows` with the API key returns 200 (status code only)
-- [ ] Exit (added): bridge returns schema-valid JSON from Claude on the Pro login
+- [x] Prit 1: n8n owner account created
+- [x] Prit 2: n8n API key in `.env` (set)
+- [x] Prit (added): `claude setup-token` done; `CLAUDE_CODE_OAUTH_TOKEN` set
+- [-] Prit 3 (optional): n8n-mcp skipped; rule 0.7 falls back to docs.n8n.io and the instance's own API
+- [x] Exit: `GET /api/v1/workflows` returned 200
+- [x] Exit (added): bridge returned schema-valid JSON from claude-haiku-4-5 on the Pro login in 10.9 s (2,518 in / 575 out tokens)
 - [x] Exit: Docker, container and volume explained in 3 sentences
-- [ ] 0.2 routine
+- [x] 0.2 routine
 
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
@@ -89,4 +89,5 @@ only with evidence. The checklist for a phase is added when that phase starts.
 
 ## Open items
 
-- Phase 1: Prit's steps above, then the two remaining exit checks.
+- Phase 2: Prit creates the accounts in docs/CREDENTIALS_SETUP.md.
+- Phase 3: landing page build and review.
