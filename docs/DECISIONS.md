@@ -21,3 +21,12 @@ One line per deviation from `docs/BUILD_SPEC.md`: what changed, and why.
 - **The AI bridge listens on `127.0.0.1` and requires an `x-bridge-token` header.** Why: Docker Desktop forwards `host.docker.internal` to the PC's loopback (tested from inside the n8n container), so the bridge never needs to be reachable from the network; the token stops other local programs from spending the plan's usage.
 - **The bridge ignores `max_tokens` and `temperature`; it caps work at 2 parallel Claude Code processes and 60 s per request.** Why: Claude Code's CLI has no max-tokens flag; the caps protect the Pro plan's usage limits during bursts like `send:test`.
 - **`scripts/lib/claude-cli.mjs` holds the Claude Code call for both the bridge and (Phase 4) `eval-prompt.mjs`.** Why: one implementation, so the eval tests exactly what n8n uses.
+
+## Phase 2 (2026-10-05)
+
+- **n8n credentials are created by `npm run setup:credentials` through the n8n API, not by hand in the n8n UI, and their IDs are written into `.env` automatically.** Why: fewer manual steps and no copying IDs out of URLs (Prit asked for simpler steps). The Gmail app password is typed into a hidden prompt and the Google key is read from its file outside the repo; both go only to n8n, as in spec 6.2.
+- **The setup script writes the sheet's header row (and renames the first tab to `Leads`, bolds and freezes row 1) instead of Prit pasting it.** Why: removes the paste and "Split text to columns" step and makes the Phase 2 exit check (24 headers, shared as Editor) an automatic check. It refuses to overwrite a row 1 that has other text.
+- **The "AI bridge token" credential may only be sent to `host.docker.internal`.** Why: n8n's allowed-domains setting stops the token from being sent anywhere else by mistake.
+- **Added `npm run check:env`.** Why: Phase 2 task 2 ("every .env variable prints set") as a command Prit can run himself; it also flags malformed values without printing them.
+- **Section 14 B (Anthropic API key) and the "Anthropic API key" credential are dropped in bridge mode.** Why: see Phase 0 bridge decision.
+- **`SHEET_COLUMNS` lives in `src/logic/row.js` now.** Why: the setup script and Phase 4's `buildSheetRow` must use the same 24 columns.

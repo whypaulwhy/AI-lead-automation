@@ -54,6 +54,29 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: Docker, container and volume explained in 3 sentences
 - [x] 0.2 routine
 
+## Phase 2 checklist (in progress)
+
+- [x] T1 `docs/CREDENTIALS_SETUP.md` written from Section 14, adapted (no Anthropic account; credentials by script)
+- [x] Added: `npm run setup:credentials` (n8n API) and `npm run check:env`
+- [x] "AI bridge token" credential created through the API; `N8N_CRED_AI_BRIDGE_ID` set
+- [ ] Prit: guide steps A to H (Gmail x2, sheet, Google robot account, Slack, Cal.com, five `.env` lines, `setup:credentials`)
+- [ ] T2 every `.env` value `set` (`npm run check:env` says "All good.")
+- [ ] T2 ask permission, post "Setup check from the Lead Responder build" to Slack, confirm HTTP 200
+- [ ] Exit: sheet has the 24 headers in A1:X1 and is shared as Editor (checked by `setup:credentials`)
+- [ ] 0.2 routine
+
+## Phase 3 checklist (in progress, parallel with Phase 2)
+
+- [ ] T1 design plan in DECISIONS.md (8.4), checked against 8.5
+- [ ] T2 `site/` built per Section 8; `site/config.js` from `npm run build -- --site-only`
+- [ ] T3 served with `npm run site`; checked at 375, 768, 1280 px; self-critique
+- [ ] T4 `tests/copy.test.js` (13.2) passes
+- [ ] Prit: open http://localhost:8080 on desktop and phone width, try the form with the keyboard only, say what feels off
+- [ ] Exit: 8.6 quality floor passes
+- [ ] Exit: copy test passes
+- [ ] Exit: Prit approves the look
+- [ ] 0.2 routine
+
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |

@@ -18,6 +18,8 @@
     "test": "node --test",
     "eval:prompt": "node scripts/eval-prompt.mjs",
     "send:test": "node scripts/send-test-leads.mjs",
-    "check:secrets": "node scripts/check-secrets.mjs"
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:env": "node scripts/check-env.mjs",
+    "setup:credentials": "node scripts/setup-credentials.mjs"
   }
 }
