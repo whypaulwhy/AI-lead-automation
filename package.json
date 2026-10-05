@@ -12,7 +12,7 @@
     "n8n:down": "docker compose down",
     "n8n:logs": "docker compose logs -f n8n",
     "ai:bridge": "node scripts/ai-bridge.mjs",
-    "site": "npx --yes serve@14.2.6 site -l 8080",
+    "site": "npx --yes serve@14.2.6 site -l 8080 --no-clipboard",
     "build": "node scripts/build.mjs",
     "deploy": "node scripts/build.mjs && node scripts/deploy.mjs",
     "test": "node --test",

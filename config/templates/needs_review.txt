@@ -1,0 +1,7 @@
+Hi {first_name},
+
+Thanks for the details. I've passed your message to our estimator, and one of us will reply within one business day.
+
+If it's urgent, call us at {company_phone}.
+
+{signature}

@@ -1,0 +1,10 @@
+Hi {first_name},
+
+{opening_line}
+
+No rush on our end. When you want real numbers, a free inspection gets you a written estimate with photos. You can book one whenever you're ready:
+{booking_url}
+
+If a question comes up in the meantime, reply here and I'll answer it.
+
+{signature}

@@ -67,13 +67,15 @@ only with evidence. The checklist for a phase is added when that phase starts.
 
 ## Phase 3 checklist (in progress, parallel with Phase 2)
 
-- [ ] T1 design plan in DECISIONS.md (8.4), checked against 8.5
-- [ ] T2 `site/` built per Section 8; `site/config.js` from `npm run build -- --site-only`
-- [ ] T3 served with `npm run site`; checked at 375, 768, 1280 px; self-critique
-- [ ] T4 `tests/copy.test.js` (13.2) passes
+- [x] T1 design plan in DECISIONS.md (8.4), checked against 8.5
+- [x] T2 `site/` built per Section 8; `site/config.js` from `npm run build -- --site-only`
+- [x] T3 served with `npm run site`; checked in the browser pane at 360, 375, 768, 1280 px. Self-critique fixes: headline no longer splits "storm-damaged", balanced headline lines, larger gable, "How it works" changed from four equal columns (a stock template pattern) to job-sheet rows
+- [x] T4 `tests/copy.test.js` passes: page text, 6 templates, customer config strings, form options match config, fiction disclaimer and 555-01xx numbers
+- [x] Form behavior checked: empty submit shows the 6 exact spec messages, focus to first invalid, `aria-describedby` linked, live region announces; errors clear while fixing; server 400 errors shown under the field; success panel replaces the form and takes focus; network failure keeps all typed values
 - [ ] Prit: open http://localhost:8080 on desktop and phone width, try the form with the keyboard only, say what feels off
-- [ ] Exit: 8.6 quality floor passes
-- [ ] Exit: copy test passes
+- [x] Exit 8.6: visible labels, required stated in words, one polite live region, visible focus (slate ring, yellow on slate bands), DOM-order keyboard flow (honeypot skipped), 44px targets (inline text links exempt), no horizontal scroll at 360
+- [ ] Exit 8.6 "no console errors": the only errors are the CORS failure because the webhook does not exist yet; recheck in Phase 5 after the webhook with Allowed Origins is deployed
+- [x] Exit: copy test passes
 - [ ] Exit: Prit approves the look
 - [ ] 0.2 routine
 
@@ -87,12 +89,12 @@ only with evidence. The checklist for a phase is added when that phase starts.
 | AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | pending (Phase 7) |
 | AC-05 | `send:test` matches 13.1 for all 11 fixtures | pending (Phase 7) |
 | AC-06 | Three failure drills pass, environment restored | pending (Phase 6) |
-| AC-07 | No banned phrases or characters in customer text | pending (Phases 3 and 4) |
+| AC-07 | No banned phrases or characters in customer text | site, templates and config passing (copy test); AI slots in Phase 4 |
 | AC-08 | Site meets 8.6 at 375, 768, 1280 px | pending (Phase 3) |
 | AC-09 | `check:secrets` passes, `.env` never committed | passing so far |
 | AC-10 | README lets someone run it from zero | pending (Phase 8) |
 | AC-11 | ARCHITECTURE, HANDOVER, DEMO_SCRIPT, CREDENTIALS_SETUP match the build | pending (Phases 2 and 8) |
-| AC-12 | Footer disclaimer, every phone number 555-01xx | pending (Phases 3 and 4) |
+| AC-12 | Footer disclaimer, every phone number 555-01xx | site passing (copy test); fixtures in Phase 4 |
 
 ## Approvals
 

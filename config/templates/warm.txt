@@ -1,0 +1,10 @@
+Hi {first_name},
+
+{opening_line}
+
+The next step is a free inspection. It takes about 30 minutes, and afterwards you get photos of what we found and a written estimate. You can book a time here:
+{booking_url}
+
+If anything comes up before then, just reply to this email.
+
+{signature}

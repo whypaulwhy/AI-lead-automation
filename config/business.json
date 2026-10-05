@@ -1,0 +1,94 @@
+{
+  "company": {
+    "name": "Cedar & Slate Roofing",
+    "city": "Austin",
+    "state": "TX",
+    "phone_display": "(512) 555-0147",
+    "phone_tel": "+15125550147",
+    "timezone": "America/Chicago",
+    "is_demo": true
+  },
+  "sender": {
+    "name": "Dana Ortiz",
+    "title": "Office Manager",
+    "from_display_name": "Dana at Cedar & Slate Roofing"
+  },
+  "ai": {
+    "model": "claude-haiku-4-5-20251001",
+    "max_tokens": 800
+  },
+  "form_services": {
+    "leak": "Leak or water coming in",
+    "storm_damage": "Storm or hail damage",
+    "roof_repair": "Repair (no leak)",
+    "roof_replacement": "New roof",
+    "roof_inspection": "Inspection",
+    "other": "Something else"
+  },
+  "services": {
+    "not_offered": {
+      "gutters": "We only work on gutters as part of a roof job, so a gutter company will get you a better price for cleaning on its own.",
+      "solar": "We don't install solar panels. If you want the roof checked before a solar install, we're happy to do that inspection.",
+      "commercial": "We only work on homes, so a commercial roofing contractor is the right call for this building.",
+      "not_roofing": "That one is outside what we do. We only work on roofs for homes in the Austin area."
+    }
+  },
+  "service_area_zips": [
+    "78701", "78702", "78703", "78704", "78705", "78712", "78717", "78719", "78721", "78722",
+    "78723", "78724", "78725", "78726", "78727", "78728", "78729", "78730", "78731", "78732",
+    "78733", "78734", "78735", "78736", "78737", "78738", "78739", "78741", "78742", "78744",
+    "78745", "78746", "78747", "78748", "78749", "78750", "78751", "78752", "78753", "78754",
+    "78756", "78757", "78758", "78759"
+  ],
+  "scoring": {
+    "base": 20,
+    "urgency": { "emergency": 35, "this_week": 25, "this_month": 15, "exploring": 2, "unknown": 8 },
+    "service_category": {
+      "leak_repair": 15, "storm_damage": 15, "roof_replacement": 15,
+      "roof_repair": 12, "roof_inspection": 8, "unclear": 3
+    },
+    "property_type": { "single_family": 10, "multi_family": 6, "unknown": 4 },
+    "decision_maker": { "yes": 8, "unknown": 2, "no": -10 },
+    "money_signal": { "insurance_claim": 5, "budget_mentioned": 3, "price_shopping": 0, "none": 0 },
+    "phone_provided": 5,
+    "thresholds": { "hot": 80, "warm": 62 }
+  },
+  "email": {
+    "subjects": {
+      "default": "About your {subject_topic}",
+      "needs_review": "We got your roofing request"
+    },
+    "emergency_line": "If water is coming in right now, call us at {company_phone}. We can usually get a tarp on it the same day.",
+    "fallback_subject_topic": "roofing request",
+    "fallback_opening_lines": {
+      "leak_repair": "Sorry to hear about the leak, and thanks for the details on where it's showing up.",
+      "storm_damage": "Sorry to hear the storm got to your roof.",
+      "roof_repair": "Thanks for the details on what you're seeing up there.",
+      "roof_replacement": "Thanks for telling us about the roof and what you have in mind.",
+      "roof_inspection": "Thanks for asking about an inspection.",
+      "default": "Thanks for the note and the details."
+    }
+  },
+  "slack": {
+    "alert_tiers": ["hot", "warm", "needs_review"],
+    "hot": "*Hot lead* (score {score})\n{full_name}, {zip}, {phone_display}\n{issue_summary}\n{reply_status_line} Worth a call right away.\n{sheet_link}",
+    "warm": "*Warm lead* (score {score})\n{full_name}, {zip}, {phone_display}\n{issue_summary}\n{reply_status_line}\n{sheet_link}",
+    "needs_review": "*Lead needs a human reply*\n{full_name}, {zip}, {phone_display}\nThe AI step failed, so only a short acknowledgement went out. Their message: \"{message_preview}\"\n{sheet_link}",
+    "reply_sent_line": "Booking link sent at {sent_time}.",
+    "reply_failed_line": "The reply email failed to send. Please reply by hand.",
+    "spam_medium_line": "Could be spam. Check before calling.",
+    "no_phone_text": "no phone given",
+    "sheet_link": "<{sheet_url}|Open the lead log>"
+  },
+  "copy_rules": {
+    "banned_phrases": [
+      "reaching out", "i hope", "hope this", "rest assured", "we understand", "i understand",
+      "don't hesitate", "do not hesitate", "valued customer", "seamless", "delve", "top-notch",
+      "peace of mind", "we've got you covered", "as an ai", "discount", "% off", "free of charge",
+      "no cost", "no charge", "guarantee", "promise", "asap", "right away", "today", "tomorrow",
+      "tonight", "transform", "elevate", "unlock", "revolutionize", "cutting-edge", "world-class",
+      "hassle-free", "one-stop"
+    ],
+    "banned_characters": ["—", "–", "!", "%", "$"]
+  }
+}

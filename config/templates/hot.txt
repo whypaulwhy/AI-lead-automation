@@ -1,0 +1,12 @@
+Hi {first_name},
+
+{opening_line}
+
+{emergency_line}
+
+We have inspection times open this week. Pick whichever works for you here:
+{booking_url}
+
+If none of those fit, reply with a time that does and I'll make it work.
+
+{signature}

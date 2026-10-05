@@ -30,3 +30,42 @@ One line per deviation from `docs/BUILD_SPEC.md`: what changed, and why.
 - **Added `npm run check:env`.** Why: Phase 2 task 2 ("every .env variable prints set") as a command Prit can run himself; it also flags malformed values without printing them.
 - **Section 14 B (Anthropic API key) and the "Anthropic API key" credential are dropped in bridge mode.** Why: see Phase 0 bridge decision.
 - **`SHEET_COLUMNS` lives in `src/logic/row.js` now.** Why: the setup script and Phase 4's `buildSheetRow` must use the same 24 columns.
+
+## Phase 3 design plan (2026-10-05)
+
+Guiding principle: it should read like the lettering on a well-kept work truck. Plain words, one color doing the shouting, nothing a stressed homeowner has to decode.
+
+- Palette: slate `#26323B` (text, header, footer), slate-mid `#51626F` (secondary text and input borders; 6.3:1 on white, 5.4:1 on mist), mist `#E9EEF1` (alternate bands), white surfaces, signal yellow `#F2B705` only on the primary button and the roofline (slate on yellow 7.2:1), error `#B42318` (6.6:1), success `#1F7A4D` (5.3:1).
+- Type: Barlow 400/600/700 with a `system-ui` fallback; body 18px / 1.55, headings 1.15, paragraphs capped at 65ch.
+- Layout: slate header band, yellow gable roofline, hero (copy 7/12, form 5/12 on white with a 1px slate border and 4px radius), then full-width bands alternating mist and white, slate footer. Two columns start at 900px; below that, one column.
+- One bold element: the roofline, a flat 3px yellow line with one low gable rising over the start of the content column.
+- Motion: none except the button's busy state and a 150 ms fade on the success panel, off under `prefers-reduced-motion`.
+
+```
+Desktop (1280)                                   Mobile (375)
++----------------------------------------------+ +---------------------------+
+| Cedar & Slate Roofing          (512) 555-0147| | Cedar & Slate  (512)...   |
++----------------------------------------------+ +---------------------------+
+ ____/\________________________________________   __/\______________________
+| H1 two lines                 | +-----------+ | | H1                        |
+| lead paragraph               | | form card | | | lead paragraph            |
+| - three plain points         | | ...       | | | +-----------------------+ |
+|                              | +-----------+ | | | form card             | |
++----------------------------------------------+ | +-----------------------+ |
+| What we work on: term | description rows     | | - three plain points      |
+| How it works: 1  2  3  4                     | | sections stack, one col   |
+| Where we work / Questions / footer           | | footer                    |
++----------------------------------------------+ +---------------------------+
+```
+
+Checked against 8.5: no gradients, blur, illustrations, emoji, icons in inputs, eyebrow labels, restyled headline words, numbers outside How it works, scroll fades, arrows, middle-dot strings, card grids, pills, cream and terracotta, dark-with-neon, fake proof, banned phrases, dashes or exclamation marks.
+
+## Phase 3 (2026-10-05)
+
+- **Footer is a slate band, in addition to the white and mist bands.** Why: it closes the page the way the header opens it, and keeps the fiction disclaimer visually separate from the business content.
+- **The form has a short heading ("Request a free inspection") and the line "All fields are required unless marked optional."** Why: 8.6 requires the required state in words; the heading gives the form a name for screen readers and on mobile, where it sits below the intro.
+- **All visible wording, including validation messages and live announcements, lives in `index.html` (`data-*` attributes); `app.js` holds none.** Why: the copy test (13.2) can then check every word a visitor can see.
+- **The busy button uses `aria-disabled` plus a JS guard instead of the `disabled` attribute.** Why: disabling a focused button drops keyboard focus to the page in some browsers; the button still reads as disabled and ignores clicks while sending.
+- **`config/business.json` and `config/templates/*.txt` are written in Phase 3, not Phase 4.** Why: the Phase 3 copy test checks their wording, so they must exist first. Content is exactly spec 6.3 and 6.4.
+- **Scripts read `.env` with `util.parseEnv` (the same parser `process.loadEnvFile` uses) instead of loading it into `process.env`.** Why: values in `process.env` are inherited by child processes such as Claude Code; keeping them in a plain object avoids that.
+- **`serve` runs with `--no-clipboard`.** Why: by default it copies the URL to the clipboard on every start, overwriting whatever Prit had copied.

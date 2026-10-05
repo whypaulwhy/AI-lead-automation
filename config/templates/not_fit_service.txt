@@ -1,0 +1,9 @@
+Hi {first_name},
+
+{opening_line}
+
+{decline_line}
+
+Sorry we're not the right fit for this one.
+
+{signature}
