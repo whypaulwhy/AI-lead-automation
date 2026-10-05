@@ -1,0 +1,26 @@
+# Local n8n for the Lead Responder demo. Values come from .env (Docker Compose reads it automatically).
+name: lead-responder
+
+services:
+  n8n:
+    image: n8nio/n8n:${N8N_VERSION:?Set N8N_VERSION in .env}
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Chicago
+      - TZ=America/Chicago
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env}
+    # Lets the workflow reach the AI bridge running on this PC (scripts/ai-bridge.mjs).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
