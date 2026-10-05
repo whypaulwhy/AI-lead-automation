@@ -1,0 +1,23 @@
+{
+  "name": "lead-responder-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI lead responder demo for a fictional Austin roofing company (n8n + Claude).",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "n8n:up": "docker compose up -d",
+    "n8n:down": "docker compose down",
+    "n8n:logs": "docker compose logs -f n8n",
+    "ai:bridge": "node scripts/ai-bridge.mjs",
+    "site": "npx --yes serve@14.2.6 site -l 8080",
+    "build": "node scripts/build.mjs",
+    "deploy": "node scripts/build.mjs && node scripts/deploy.mjs",
+    "test": "node --test",
+    "eval:prompt": "node scripts/eval-prompt.mjs",
+    "send:test": "node scripts/send-test-leads.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs"
+  }
+}

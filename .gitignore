@@ -1,0 +1,9 @@
+# Secrets and local config
+.env
+secrets/
+*service-account*.json
+
+# Generated
+build/
+site/config.js
+node_modules/
