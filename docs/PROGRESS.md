@@ -81,8 +81,9 @@ only with evidence. The checklist for a phase is added when that phase starts.
 
 ## Phase 4 checklist (in progress)
 
-- [x] T1 , templates (done in Phase 3),  and  copied from the spec by script
-- [x] T2  (validate, ai, score, compose, row) and : 58 tests pass; the five logic files combine into one Code node and pass - [x] T3  (bridge mode calls Claude Code like the bridge; api mode uses fetch per spec)
+- [x] T1 `config/business.json` and templates (written in Phase 3); `prompts/*` and `fixtures/leads.json` copied from the spec by script
+- [x] T2 `src/logic/*` (validate, ai, score, compose, row) and `tests/*.test.js`: 58 tests pass; the five logic files combine into one Code node and pass `node --check`
+- [x] T3 `scripts/eval-prompt.mjs` (bridge mode calls Claude Code like the bridge; api mode uses fetch per spec)
 - [x] T4 eval run 1: wording passed but 4 of 9 calls timed out; fixed by turning off Claude Code's default thinking
 - [x] T4 prompt round 1 (stop parroting the message back) and round 2 (homeowner rule, one detail, no "thanks for reaching out")
 - [x] Exit: eval passes: 9 of 9 tiers allowed, 0 parse failures, 9 of 9 lines pass the guard without fallback, 6 to 11 s per lead
