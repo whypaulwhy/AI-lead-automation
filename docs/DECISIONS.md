@@ -150,6 +150,7 @@ Prit asked for the whole setup to be tested "when everything feels like it's fal
 - **Copy guard: opening lines may not contain a semicolon or "we can / we will / we'll / we could".** Why: the eval produced "Sorry about the hail damage on Tuesday; we can help before your insurance adjuster arrives Friday." (two sentences and a promise), which the old guard passed.
 - **Error Trigger output in 2.41.6:** `execution{id,url,error,lastNodeExecuted,mode,executionContext}`, `workflow{id,name}`; `execution.url` is provided.
 - **Capacity on this PC: about 6 simultaneous leads within the timeout** (2 Claude slots, 6 to 11 s each). More would time out once and succeed on the retry.
+- **The slack-down drill points at a closed port (`host.docker.internal:9`), not a fake Slack address.** Why: a fake hooks.slack.com address with real-looking IDs trips the secret scanner, and one without them gets a redirect that n8n follows to a page it treats as success, so the drill tested nothing (caught by rerunning it).
 - **Known limits, left as they are:** a message over 2,000 characters gets the spec's "at least 10 characters" text (the form's maxlength makes this unreachable for visitors); duplicate submissions are not merged; when n8n itself is down the visitor sees "We couldn't send that... try again" and nothing is stored.
 - `config/business.json` is now written by `JSON.stringify` (the ZIP list is one per line); content is unchanged apart from the new Slack texts.
 

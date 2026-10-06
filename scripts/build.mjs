@@ -73,7 +73,7 @@ export const DRILLS = {
     if (!extra.drillSmtpId) throw new Error('email-down needs the drill SMTP credential (deploy.mjs creates it).');
     v.N8N_CRED_SMTP_ID = extra.drillSmtpId;
   },
-  'slack-down': (v) => { v.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/drill-not-a-webhook'; },
+  'slack-down': (v) => { v.SLACK_WEBHOOK_URL = 'http://host.docker.internal:9/slack-drill'; },
   'sheet-down': (v) => { v.GOOGLE_SHEET_ID = 'drill-sheet-that-does-not-exist'; },
 };
 
