@@ -22,6 +22,9 @@ const NAMES = {
 };
 const KEY_FOLDERS = [join(homedir(), 'Documents', 'secrets'), join(homedir(), 'Downloads'), join(homedir(), 'Documents')];
 
+const N8N_DOWN = 'n8n is not running. Open Docker Desktop from the Start menu and wait about a minute '
+  + '(it does not start by itself after a PC restart), then run: npm run n8n:up';
+
 const { values: args } = parseArgs({ options: { only: { type: 'string' }, key: { type: 'string' } } });
 const env = readEnv();
 const say = (step, text) => console.log(`${NAMES[step]}: ${text}`);
@@ -36,7 +39,7 @@ async function n8n(method, path, body) {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new Error('n8n is not running. Start it with: npm run n8n:up');
+    throw new Error(N8N_DOWN);
   }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`n8n answered ${res.status}${json.message ? `: ${json.message}` : ''}`);
@@ -241,6 +244,12 @@ if (unknown.length) {
 }
 if (!env.N8N_API_KEY) {
   console.error('N8N_API_KEY is missing in .env. Create it in n8n under Settings > n8n API.');
+  process.exit(1);
+}
+try {
+  await fetch(`${env.N8N_BASE_URL}/healthz`, { signal: AbortSignal.timeout(5000) });
+} catch {
+  console.error(N8N_DOWN);
   process.exit(1);
 }
 

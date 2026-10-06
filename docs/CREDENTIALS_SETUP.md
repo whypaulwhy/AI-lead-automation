@@ -106,7 +106,8 @@ You should see: one URL listed under "Webhook URLs for Your Workspace", with `#n
    `n8n lead responder` and click **Create**. Google shows a 16-letter password once. Leave that
    window open. (If the page says app passwords aren't available, step A3 isn't finished.)
 2. Open a terminal in the project folder: in File Explorer, open `D:\p1`, click the address bar, type
-   `powershell`, and press Enter.
+   `powershell`, and press Enter. If you restarted your PC since n8n was last on, open Docker Desktop
+   from the Start menu first, wait about a minute, and run `npm run n8n:up`.
 3. Run:
    ```
    npm run setup:credentials
@@ -137,5 +138,5 @@ You should see: one URL listed under "Webhook URLs for Your Workspace", with `#n
 | `The sheet isn't shared with ...` | Share the sheet with that exact address as Editor (C8), then run the command again. |
 | `The Google Sheets API is off` | Do step C3 in the same project as the robot account, then run the command again. |
 | `no Google key file found` | Move the downloaded `.json` file into `Documents\secrets` (C7). |
-| `n8n is not running` | Run `npm run n8n:up`, wait a minute, then try again. |
+| `n8n is not running` | Docker Desktop doesn't start by itself after a PC restart. Open it from the Start menu, wait about a minute, run `npm run n8n:up`, then try again. |
 | `check:env` says `set, but ...` | Open `.env` and fix that one line as the message says. |
