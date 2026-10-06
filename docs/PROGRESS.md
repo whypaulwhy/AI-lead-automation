@@ -79,12 +79,22 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [ ] Exit: Prit approves the look
 - [ ] 0.2 routine
 
+## Phase 4 checklist (in progress)
+
+- [x] T1 , templates (done in Phase 3),  and  copied from the spec by script
+- [x] T2  (validate, ai, score, compose, row) and : 58 tests pass; the five logic files combine into one Code node and pass - [x] T3  (bridge mode calls Claude Code like the bridge; api mode uses fetch per spec)
+- [x] T4 eval run 1: wording passed but 4 of 9 calls timed out; fixed by turning off Claude Code's default thinking
+- [x] T4 prompt round 1 (stop parroting the message back) and round 2 (homeowner rule, one detail, no "thanks for reaching out")
+- [x] Exit: eval passes: 9 of 9 tiers allowed, 0 parse failures, 9 of 9 lines pass the guard without fallback, 6 to 11 s per lead
+- [ ] Exit: Prit's approval of the tone, written here
+- [ ] 0.2 routine
+
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |
 |---|---|---|
-| AC-01 | `npm test` passes | pending (Phase 4) |
-| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | pending (Phase 4) |
+| AC-01 | `npm test` passes | passing (58 tests) |
+| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | eval passing 9 of 9; tone waiting for Prit |
 | AC-03 | Both workflows validate, main workflow published | pending (Phase 5) |
 | AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | pending (Phase 7) |
 | AC-05 | `send:test` matches 13.1 for all 11 fixtures | pending (Phase 7) |

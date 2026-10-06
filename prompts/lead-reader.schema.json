@@ -1,0 +1,93 @@
+{
+  "type": "object",
+  "properties": {
+    "service_category": {
+      "type": "string",
+      "enum": [
+        "leak_repair",
+        "storm_damage",
+        "roof_repair",
+        "roof_replacement",
+        "roof_inspection",
+        "gutters",
+        "solar",
+        "commercial",
+        "not_roofing",
+        "unclear"
+      ]
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "emergency",
+        "this_week",
+        "this_month",
+        "exploring",
+        "unknown"
+      ]
+    },
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "single_family",
+        "multi_family",
+        "commercial",
+        "unknown"
+      ]
+    },
+    "decision_maker": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ]
+    },
+    "money_signal": {
+      "type": "string",
+      "enum": [
+        "insurance_claim",
+        "budget_mentioned",
+        "price_shopping",
+        "none"
+      ]
+    },
+    "spam_likelihood": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "issue_summary": {
+      "type": "string",
+      "description": "At most 15 words, factual, third person, for the internal team."
+    },
+    "explanation": {
+      "type": "string",
+      "description": "At most 25 words naming the words in the message that set urgency and service_category."
+    },
+    "subject_topic": {
+      "type": "string",
+      "description": "2 to 6 words naming the issue, lowercase except proper nouns, no punctuation."
+    },
+    "opening_line": {
+      "type": "string",
+      "description": "One sentence, 8 to 28 words, mentions one concrete detail from the message. No greeting, no name."
+    }
+  },
+  "required": [
+    "service_category",
+    "urgency",
+    "property_type",
+    "decision_maker",
+    "money_signal",
+    "spam_likelihood",
+    "issue_summary",
+    "explanation",
+    "subject_topic",
+    "opening_line"
+  ],
+  "additionalProperties": false
+}

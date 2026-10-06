@@ -49,6 +49,9 @@ export function runClaude({ model, system, userText, schema }, { oauthToken = ''
   delete env.ANTHROPIC_API_KEY;
   delete env.ANTHROPIC_AUTH_TOKEN;
   if (oauthToken) env.CLAUDE_CODE_OAUTH_TOKEN = oauthToken;
+  // Claude Code turns on extended thinking by default. The API request in spec 10.4 has none, and
+  // with it a lead took 30 to 70 s and 5,000+ output tokens instead of about 9 s and 500.
+  env.MAX_THINKING_TOKENS = '0';
 
   const started = Date.now();
   return new Promise((resolve) => {
