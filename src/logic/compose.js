@@ -131,6 +131,9 @@ export function describeAiFailure(aiStatus, aiError, config) {
   const error = String(aiError || '');
   if (aiStatus === 'failed_refusal') return reasons.refusal;
   if (aiStatus === 'failed_parse' || aiStatus === 'failed_max_tokens') return reasons.parse;
+  // The bridge's provider chain names each provider and why it failed.
+  const chain = error.match(/All AI providers failed\.\s*([^"\\]+)/);
+  if (chain) return composeFill(reasons.all_providers, { detail: chain[1].trim().replace(/[.;]+$/, '') });
   if (/ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|connect/i.test(error)) return reasons.bridge_down;
   if (/\b401\b|authentication|unauthori[sz]ed|forbidden|\b403\b/i.test(error)) return reasons.auth;
   if (/timeout|timed out|ETIMEDOUT|ECONNABORTED|\b504\b/i.test(error)) return reasons.timeout;

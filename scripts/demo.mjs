@@ -67,7 +67,29 @@ if (!workflow || !workflow.active || isDrillWorkflow(workflow)) {
 }
 step('Workflow: published');
 
-// 4. AI bridge
+// 4. Local AI (Ollama), if it is in the provider chain: start it and keep it at low priority so the
+//    PC stays responsive while it works (the priority resets whenever Ollama restarts).
+const chain = String(env.AI_PROVIDERS || '').split(',').map((s) => s.trim());
+if (env.AI_MODE !== 'api' && chain.includes('ollama')) {
+  const ollamaUrl = (env.OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+  const ollamaUp = () => fetch(`${ollamaUrl}/api/version`, { signal: AbortSignal.timeout(2000) }).then((r) => r.ok).catch(() => false);
+  if (!(await ollamaUp())) {
+    const exe = join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Ollama', 'ollama app.exe');
+    if (existsSync(exe)) {
+      step('Local AI: starting Ollama...');
+      spawn(exe, [], { detached: true, stdio: 'ignore' }).unref();
+      await waitFor(ollamaUp, 60, 'Ollama');
+    }
+  }
+  if (await ollamaUp()) {
+    await run('powershell.exe', ['-NoProfile', '-Command', "Get-Process ollama -ErrorAction SilentlyContinue | ForEach-Object { $_.PriorityClass = 'BelowNormal' }"], 15000);
+    step('Local AI: Ollama running at low priority');
+  } else {
+    step('Local AI: Ollama is not running; the next AI in the chain will answer');
+  }
+}
+
+// 5. AI bridge
 if (env.AI_MODE !== 'api') {
   const bridge = await bridgeHealth(env);
   if (bridge?.drill) step(`AI bridge: running in DRILL mode (${bridge.drill}) in another terminal. Stop it there and run npm run ai:bridge.`);
@@ -79,7 +101,7 @@ if (env.AI_MODE !== 'api') {
   }
 }
 
-// 5. Website
+// 6. Website
 const siteUp = await fetch(env.SITE_ORIGIN, { signal: AbortSignal.timeout(3000) }).then((r) => r.ok).catch(() => false);
 if (siteUp) {
   step(`Website: already serving ${env.SITE_ORIGIN}`);

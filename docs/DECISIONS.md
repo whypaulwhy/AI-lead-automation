@@ -157,3 +157,15 @@ Prit asked for the whole setup to be tested "when everything feels like it's fal
 ## Phase 7 (2026-10-06)
 
 - All 11 fixtures sent to the live webhook: every tier inside its allowed list, email and Slack exactly as expected, browser answer 121 to 392 ms, 9 of 9 runs successful and 9 of 9 rows in the sheet. The prompt_injection email contains none of "50", "%", "discount".
+
+## AI provider chain (2026-10-06, approved by Prit)
+
+Prit does not want the business to depend on one AI company ("if claude goes down oneday or if i decide to cancel plan my whole business will go down").
+
+- **The bridge became a provider chain (`scripts/lib/ai-chain.mjs`), configured by `AI_PROVIDERS` in `.env`.** Providers: `ollama` (local open model), `claude-code` (Pro plan, this PC only), `openai` (any OpenAI-compatible API) and `anthropic` (a client's API key, stored as `AI_ANTHROPIC_KEY` so it can never be mistaken for Claude Code's `ANTHROPIC_API_KEY`). The first answer that parses against the schema wins; a provider that is down, slow, or answers in an unusable format hands over to the next. Why: switching or dropping an AI company becomes one line in `.env`, and the n8n workflow, logic and tests do not change.
+- **n8n gives the bridge one try with a 45 s timeout; the bridge spends at most 40 s across providers** (per provider: Ollama 25 s for a cold model load, Claude Code 20 s, APIs 15 s, each capped by what is left). Why: retries now happen where the providers are known; worst-case reply time stays under a minute.
+- **The `model` column in the sheet shows which AI answered** (from the bridge response), instead of always the configured Claude model.
+- **Local model: `qwen3:4b` (2.5 GB), stored on D: (`OLLAMA_MODELS=D:\ollama\models`, approved by Prit).** Why: the RTX 2050 has 4 GB of graphics memory; the newest families start at 6.6 GB and would spill into the 16 GB of system RAM, of which often under 3 GB is free while Docker runs. C: had only 10 GB free. Alternatives if quality is poor: `granite4.1:3b` (2.1 GB), `ministral-3:3b` (3.0 GB).
+- **Keeping the PC responsive:** Ollama runs at below-normal priority, the model runs on the graphics card, requests use a 4,096-token context (small graphics-memory footprint) and `keep_alive` of 10 minutes (memory is freed after 10 idle minutes), and the eval runs local requests one at a time.
+- **Ollama requests use `think: false`.** Why: qwen3 reasons out loud by default, which costs seconds and tokens; the same choice was made for Claude Code (`MAX_THINKING_TOKENS=0`).
+- **`npm run eval:prompt -- --provider <name>`** tests one provider alone; without it the eval uses the chain. The doctor checks each AI in the chain and warns when there is no backup AI.

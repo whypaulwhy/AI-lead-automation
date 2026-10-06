@@ -6,6 +6,9 @@ const env = readEnv();
 const isEmail = (v) => /^[^\s@+]+@[^\s@]+\.[a-z]{2,}$/i.test(v);
 const isUrl = (v) => /^https?:\/\/\S+$/.test(v);
 const bridge = env.AI_MODE !== 'api';
+const PROVIDER_NAMES = ['claude-code', 'ollama', 'openai', 'anthropic'];
+const providers = String(env.AI_PROVIDERS || '').split(',').map((s) => s.trim()).filter(Boolean);
+const uses = (name) => bridge && providers.includes(name);
 
 // [key, check, hint, when this key is needed]
 const CHECKS = [
@@ -17,7 +20,14 @@ const CHECKS = [
   ['AI_BRIDGE_HOST', (v) => v.length > 0, '', bridge],
   ['AI_BRIDGE_PORT', (v) => /^\d{2,5}$/.test(v), 'should be a port number', bridge],
   ['AI_BRIDGE_TOKEN', (v) => v.length >= 32, 'looks too short', bridge],
-  ['CLAUDE_CODE_OAUTH_TOKEN', (v) => v.startsWith('sk-ant-oat'), 'should be the token from claude setup-token', bridge],
+  ['AI_PROVIDERS', (v) => v.split(',').every((p) => PROVIDER_NAMES.includes(p.trim())), `should list some of: ${PROVIDER_NAMES.join(', ')}`, bridge],
+  ['CLAUDE_CODE_OAUTH_TOKEN', (v) => v.startsWith('sk-ant-oat'), 'should be the token from claude setup-token', uses('claude-code')],
+  ['OLLAMA_URL', (v) => /^https?:\/\/\S+$/.test(v), 'should be a URL like http://127.0.0.1:11434', uses('ollama')],
+  ['OLLAMA_MODEL', (v) => /^[a-z0-9._\-/]+(:[a-z0-9._\-]+)?$/i.test(v), 'should be a model name like qwen3:4b', uses('ollama')],
+  ['OPENAI_COMPAT_URL', (v) => /^https?:\/\/\S+$/.test(v), 'should be the API base URL', uses('openai')],
+  ['OPENAI_COMPAT_KEY', (v) => v.length > 10, 'looks too short', uses('openai')],
+  ['OPENAI_COMPAT_MODEL', (v) => v.length > 0, '', uses('openai')],
+  ['AI_ANTHROPIC_KEY', (v) => v.startsWith('sk-ant-'), 'should be an Anthropic API key', uses('anthropic')],
   ['N8N_CRED_AI_BRIDGE_ID', (v) => v.length > 0, '', bridge],
   ['N8N_CRED_ANTHROPIC_ID', (v) => v.length > 0, '', !bridge],
   ['N8N_CRED_SMTP_ID', (v) => v.length > 0, ''],
@@ -36,7 +46,7 @@ const width = Math.max(...CHECKS.map(([key]) => key.length));
 for (const [key, check, hint, needed = true] of CHECKS) {
   const value = (env[key] ?? '').trim();
   let status;
-  if (!needed) status = value ? 'set (not needed in this AI_MODE)' : `not needed (AI_MODE=${env.AI_MODE})`;
+  if (!needed) status = value ? 'set (not needed with these settings)' : 'not needed with these settings';
   else if (!value) { status = 'missing'; problems += 1; }
   else if (!check(value)) { status = `set, but ${hint}`; problems += 1; }
   else status = 'set';

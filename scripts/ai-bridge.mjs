@@ -1,12 +1,14 @@
 // Local AI bridge: n8n posts the same Messages API request it would send to Anthropic, and this
-// server answers it with Claude Code headless on Prit's Claude plan (see docs/DECISIONS.md).
+// server answers it through the AI provider chain in AI_PROVIDERS (local Ollama, Claude Code on the
+// Pro plan, or API providers; see scripts/lib/ai-chain.mjs and docs/DECISIONS.md).
 // Run it with `npm run ai:bridge` and keep the terminal open. Logs never include lead text or secrets.
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, parseEnv } from 'node:util';
-import { parseMessagesRequest, runClaude } from './lib/claude-cli.mjs';
+import { providerConfigProblem, providersFromEnv, runChain } from './lib/ai-chain.mjs';
+import { parseMessagesRequest } from './lib/claude-cli.mjs';
 
 const envPath = fileURLToPath(new URL('../.env', import.meta.url));
 const env = existsSync(envPath) ? parseEnv(readFileSync(envPath, 'utf8')) : {};
@@ -18,9 +20,16 @@ const OAUTH_TOKEN = env.CLAUDE_CODE_OAUTH_TOKEN || '';
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_CONCURRENT = 2;
 const MAX_QUEUED = 20;
-// Must stay below the n8n HTTP Request timeout (25 s), so a slow call ends here with a clean 504
-// and n8n's retry starts fresh instead of queueing behind a call nobody is waiting for.
-const TIMEOUT_MS = 20000;
+// The whole chain must answer before n8n's HTTP Request timeout (45 s, one try), so the workflow
+// gets a clean error instead of timing out while a provider is still working.
+const BUDGET_MS = 40000;
+let PROVIDERS;
+try {
+  PROVIDERS = providersFromEnv(env);
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
 
 // Failure drills (Phase 6): npm run ai:bridge -- --drill slow|error|garbage|refusal
 // slow: never answers (Claude stuck); error: 529 overloaded; garbage: 200 with text that is not JSON;
@@ -95,7 +104,7 @@ function log(status, started, extra = '') {
 
 const server = createServer(async (req, res) => {
   const path = (req.url || '').split('?')[0];
-  if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, drill: DRILL || null });
+  if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, drill: DRILL || null, providers: PROVIDERS });
   if (req.method !== 'POST' || path !== '/v1/messages') return sendError(res, 404, 'not_found_error', 'Use POST /v1/messages.');
 
   const started = Date.now();
@@ -127,7 +136,13 @@ const server = createServer(async (req, res) => {
       ? new Promise((resolve) => { abort.signal.addEventListener('abort', () => resolve(null), { once: true }); })
       : DRILL
         ? drillResponse(parsed.request.model)
-        : runClaude(parsed.request, { oauthToken: OAUTH_TOKEN, timeoutMs: TIMEOUT_MS, signal: abort.signal })));
+        : runChain(body, {
+          env,
+          providers: PROVIDERS,
+          budgetMs: BUDGET_MS,
+          signal: abort.signal,
+          onAttempt: (a) => { if (!a.ok) console.log(`  ${a.provider} skipped after ${(a.ms / 1000).toFixed(1)}s: ${a.reason}`); },
+        })));
   if (abort.signal.aborted) {
     log(499, started, 'n8n stopped waiting; request dropped');
     return undefined;
@@ -141,7 +156,7 @@ const server = createServer(async (req, res) => {
     return sendError(res, result.status, result.errorType, result.message);
   }
   const { usage } = result.response;
-  log(200, started, `in=${usage.input_tokens} out=${usage.output_tokens}`);
+  log(200, started, `${result.provider ?? 'drill'} (${result.response.model}) in=${usage.input_tokens} out=${usage.output_tokens}`);
   send(res, 200, result.response);
 });
 
@@ -155,7 +170,14 @@ server.on('error', (err) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`AI bridge listening on http://${HOST}:${PORT} (Claude Code headless on your Claude plan).`);
-  if (DRILL) console.log(`DRILL MODE: ${DRILL}. No real Claude calls. Stop with Ctrl+C and start normally afterwards.`);
-  console.log(`Login: ${OAUTH_TOKEN ? 'CLAUDE_CODE_OAUTH_TOKEN from .env' : 'your normal Claude Code login'}. Press Ctrl+C to stop.`);
+  console.log(`AI bridge listening on http://${HOST}:${PORT}`);
+  const describe = (name) => (name === 'ollama' ? `ollama (${env.OLLAMA_MODEL})` : name === 'openai' ? `openai-compatible (${env.OPENAI_COMPAT_MODEL})` : name);
+  console.log(`AI chain, tried in order: ${PROVIDERS.map(describe).join(' -> ')} -> human fallback`);
+  for (const name of PROVIDERS) {
+    const problem = providerConfigProblem(name, env);
+    if (problem) console.log(`  Note: ${name} will be skipped: ${problem}`);
+  }
+  if (DRILL) console.log(`DRILL MODE: ${DRILL}. No real AI calls. Stop with Ctrl+C and start normally afterwards.`);
+  if (PROVIDERS.includes('claude-code')) console.log(`Claude login: ${OAUTH_TOKEN ? 'CLAUDE_CODE_OAUTH_TOKEN from .env' : 'your normal Claude Code login'}.`);
+  console.log('Press Ctrl+C to stop.');
 });

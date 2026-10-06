@@ -157,7 +157,8 @@
       "overloaded": "Claude is busy right now.",
       "refusal": "Claude declined to read this message.",
       "parse": "Claude answered in an unexpected format.",
-      "other": "the request to Claude failed."
+      "other": "the request to Claude failed.",
+      "all_providers": "every AI in the chain failed ({detail})."
     },
     "office_subject": "Lead alert (Slack is down): {headline}"
   },

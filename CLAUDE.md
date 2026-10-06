@@ -46,9 +46,13 @@ REST APIs. New to n8n, Docker, Node tooling, Google Cloud and Slack apps.
 ## AI path (differs from the spec, see DECISIONS.md)
 
 - `AI_MODE=bridge` (demo default): n8n posts the Messages-API-shaped request to
-  `scripts/ai-bridge.mjs` on Prit's PC, which runs `claude -p` headless on his Pro login with all tools
-  disabled, `--safe-mode`, and the customer text on stdin only. It returns a Messages-API-shaped response,
-  so the workflow and `parseAiResponse` stay the same.
+  `scripts/ai-bridge.mjs` on Prit's PC. The bridge runs an AI provider chain (`scripts/lib/ai-chain.mjs`)
+  in the order of `AI_PROVIDERS`: `ollama` (local open model, `OLLAMA_MODEL`), `claude-code` (`claude -p`
+  headless on his Pro login, all tools disabled, `--safe-mode`, customer text on stdin only), `openai`
+  (any OpenAI-compatible API) or `anthropic` (a client's key in `AI_ANTHROPIC_KEY`). The first answer that
+  parses against the schema wins; if all fail, the workflow's human fallback runs. The response is
+  Messages-API-shaped, so the workflow and `parseAiResponse` stay the same; `model` names who answered.
+  Prit does not want the business to depend on one AI company: keep every AI step provider-agnostic.
 - `AI_MODE=api` (for a paying client): the same request goes to `https://api.anthropic.com/v1/messages`
   with the client's own key in an n8n credential. The client pays for their own usage.
 

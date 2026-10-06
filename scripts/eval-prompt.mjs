@@ -1,11 +1,12 @@
-// Runs the fixtures marked run_ai through Claude with the same request the workflow sends, then the
+// Runs the fixtures marked run_ai through the AI with the same request the workflow sends, then the
 // same parsing, scoring, tier and copy guard. Prints a table plus every customer-facing line.
 // Exits 1 if any tier is outside its allowed list or any reply fails to parse.
 //
-//   npm run eval:prompt
+//   npm run eval:prompt                              the AI chain in AI_PROVIDERS, like the bridge
+//   npm run eval:prompt -- --provider ollama         one provider only (ollama, claude-code, openai, anthropic)
 //   npm run eval:prompt -- --only austin_active_leak,seo_spam
 //
-// AI_MODE=bridge (default): calls Claude Code headless on the Pro login, like scripts/ai-bridge.mjs.
+// AI_MODE=bridge (default): uses the same provider chain as scripts/ai-bridge.mjs.
 // AI_MODE=api: calls https://api.anthropic.com/v1/messages with ANTHROPIC_API_KEY (a client's key).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -14,16 +15,26 @@ import { buildAiRequest, parseAiResponse } from '../src/logic/ai.js';
 import { composeReply } from '../src/logic/compose.js';
 import { computeScore, decideTier } from '../src/logic/score.js';
 import { cleanAndValidate } from '../src/logic/validate.js';
-import { parseMessagesRequest, runClaude } from './lib/claude-cli.mjs';
+import { PROVIDER_NAMES, providerConfigProblem, providersFromEnv, runChain } from './lib/ai-chain.mjs';
 import { loadConfig, loadFixtures, loadPrompts, makeNow } from './lib/config.mjs';
 import { readEnv } from './lib/env.mjs';
 
-const PARALLEL = 2;
 const TIMEOUT_MS = 60000;
 
-const { values: args } = parseArgs({ options: { only: { type: 'string' } } });
+const { values: args } = parseArgs({ options: { only: { type: 'string' }, provider: { type: 'string' } } });
 const env = readEnv();
 const mode = env.AI_MODE === 'api' ? 'api' : 'bridge';
+if (args.provider && !PROVIDER_NAMES.includes(args.provider)) {
+  console.error(`Unknown provider "${args.provider}". Use ${PROVIDER_NAMES.join(', ')}.`);
+  process.exit(1);
+}
+const providers = mode === 'bridge' ? (args.provider ? [args.provider] : providersFromEnv(env)) : ['anthropic API'];
+for (const name of mode === 'bridge' ? providers : []) {
+  const problem = providerConfigProblem(name, env);
+  if (problem) console.log(`Note: ${name} will be skipped: ${problem}`);
+}
+// A local model shares one graphics card, so run it one lead at a time to measure real speed.
+const PARALLEL = providers.length === 1 && providers[0] === 'ollama' ? 1 : 2;
 const config = loadConfig({ bookingUrl: env.BOOKING_URL || 'https://cal.com/example', sheetId: env.GOOGLE_SHEET_ID || 'SHEET' });
 const prompts = loadPrompts();
 
@@ -37,7 +48,7 @@ if (args.only) {
   }
   fixtures = fixtures.filter((f) => wanted.includes(f.id));
 }
-if (mode === 'bridge' && !env.CLAUDE_CODE_OAUTH_TOKEN) {
+if (mode === 'bridge' && providers.includes('claude-code') && !env.CLAUDE_CODE_OAUTH_TOKEN) {
   console.error('CLAUDE_CODE_OAUTH_TOKEN is missing in .env. Run claude setup-token (Phase 1).');
   process.exit(1);
 }
@@ -46,11 +57,9 @@ if (mode === 'api' && !env.ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
-async function callClaude(request) {
+async function callAi(request) {
   if (mode === 'bridge') {
-    const parsed = parseMessagesRequest(request);
-    if (!parsed.ok) return { ok: false, message: parsed.message };
-    const result = await runClaude(parsed.request, { oauthToken: env.CLAUDE_CODE_OAUTH_TOKEN, timeoutMs: TIMEOUT_MS });
+    const result = await runChain(request, { env, providers, budgetMs: TIMEOUT_MS });
     return result.ok ? { ok: true, response: result.response } : { ok: false, message: result.message };
   }
   try {
@@ -73,7 +82,7 @@ async function evaluate(fixture) {
   if (route !== 'ok') return { fixture, error: `validation route ${route}` };
 
   const started = Date.now();
-  const call = await callClaude(buildAiRequest(lead, config, prompts));
+  const call = await callAi(buildAiRequest(lead, config, prompts));
   const seconds = (Date.now() - started) / 1000;
   if (!call.ok) return { fixture, seconds, error: `call failed: ${call.message}` };
 
@@ -86,7 +95,7 @@ async function evaluate(fixture) {
   const tierInfo = decideTier({ ai, lead, score, config });
   const reply = composeReply({ lead, ai, tierInfo, config });
   const leaked = (fixture.expect.email_must_not_contain ?? []).filter((s) => `${reply.email?.subject ?? ''}\n${reply.email?.text ?? ''}`.includes(s));
-  return { fixture, seconds, usage, ai, score, tierInfo, reply, leaked };
+  return { fixture, seconds, usage, model: call.response.model, ai, score, tierInfo, reply, leaked };
 }
 
 async function runAll(items) {
@@ -109,13 +118,13 @@ function table(rows) {
   return rows.map((row) => row.map((cell, col) => String(cell).padEnd(widths[col])).join('  ').trimEnd()).join('\n');
 }
 
-console.log(`Eval: ${fixtures.length} fixture(s), model ${config.ai.model}, AI_MODE=${mode}`);
+console.log(`Eval: ${fixtures.length} fixture(s), AI_MODE=${mode}, providers in order: ${providers.join(' -> ')}`);
 const results = await runAll(fixtures);
 
-const rows = [['id', 'allowed', 'tier', 'score', 'urgency', 'service_category', 'guard', 'fallback', 'in', 'out', 'sec']];
+const rows = [['id', 'allowed', 'tier', 'score', 'urgency', 'service_category', 'guard', 'fallback', 'answered by', 'in', 'out', 'sec']];
 for (const r of results) {
   if (r.error) {
-    rows.push([r.fixture.id, r.fixture.expect.allowed_tiers.join('|'), 'ERROR', '', '', '', '', '', r.usage?.input_tokens ?? '', r.usage?.output_tokens ?? '', r.seconds?.toFixed(1) ?? '']);
+    rows.push([r.fixture.id, r.fixture.expect.allowed_tiers.join('|'), 'ERROR', '', '', '', '', '', '', r.usage?.input_tokens ?? '', r.usage?.output_tokens ?? '', r.seconds?.toFixed(1) ?? '']);
     continue;
   }
   const ok = r.fixture.expect.allowed_tiers.includes(r.tierInfo.tier);
@@ -128,6 +137,7 @@ for (const r of results) {
     r.ai.service_category,
     r.reply.email === null ? 'n/a' : r.reply.used_fallback ? 'FAIL' : 'ok',
     r.reply.used_fallback ? 'yes' : 'no',
+    r.model ?? '',
     r.usage.input_tokens ?? '',
     r.usage.output_tokens ?? '',
     r.seconds.toFixed(1),

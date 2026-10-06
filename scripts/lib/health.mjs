@@ -111,6 +111,37 @@ export async function runChecks({ needSite = false } = {}) {
     }
   }
 
+  if (env.AI_MODE !== 'api') {
+    // The provider chain: which AIs could answer right now, and is there a backup?
+    const providers = String(env.AI_PROVIDERS || 'claude-code').split(',').map((s) => s.trim()).filter(Boolean);
+    const usable = [];
+    for (const name of providers) {
+      if (name === 'ollama') {
+        const tags = await get(`${(env.OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '')}/api/tags`, { timeoutMs: 3000 });
+        const installed = (tags.json?.models ?? []).map((m) => m.name);
+        const model = env.OLLAMA_MODEL ?? '';
+        const hasModel = installed.some((n) => n === model || n === `${model}:latest`);
+        if (tags.status !== 200) add('AI: Ollama', false, 'not running', 'Open Ollama from the Start menu.', true);
+        else if (!hasModel) add('AI: Ollama', false, `running, but ${model || 'no model'} is not downloaded`, `Run: ollama pull ${model}`, true);
+        else { add('AI: Ollama', true, `running with ${model}`); usable.push(name); }
+      } else if (name === 'claude-code') {
+        const ok = Boolean(env.CLAUDE_CODE_OAUTH_TOKEN);
+        add('AI: Claude (Pro plan)', ok, ok ? 'login token set' : 'no login token in .env', 'Run claude setup-token and put it in CLAUDE_CODE_OAUTH_TOKEN.', true);
+        if (ok) usable.push(name);
+      } else {
+        const key = name === 'openai' ? env.OPENAI_COMPAT_KEY && env.OPENAI_COMPAT_URL && env.OPENAI_COMPAT_MODEL : env.AI_ANTHROPIC_KEY;
+        add(`AI: ${name}`, Boolean(key), key ? 'configured' : 'not configured in .env', 'Fill in its lines in .env (see .env.example).', true);
+        if (key) usable.push(name);
+      }
+    }
+    if (usable.length === 0) add('AI chain', false, 'no AI can answer, so every lead gets the plain fallback reply', 'Fix one of the AI lines above.');
+    else add('AI chain', usable.length > 1, usable.length > 1 ? `${usable.length} AIs ready (${usable.join(' then ')}), each a backup for the one before` : `only ${usable[0]} is ready, so there is no backup AI`, 'Fix the other AI lines above to get a backup.', true);
+    const bridge = await bridgeHealth(env);
+    if (bridge?.providers && bridge.providers.join(',') !== providers.join(',')) {
+      add('AI bridge settings', false, `the running bridge uses ${bridge.providers.join(', ')}, but .env says ${providers.join(', ')}`, 'Restart the bridge (Ctrl+C, then npm run ai:bridge) or rerun npm run demo.');
+    }
+  }
+
   const site = await get(env.SITE_ORIGIN || 'http://localhost:8080', { timeoutMs: 3000 });
   add('Website', site.status === 200, site.status === 200 ? `serving ${env.SITE_ORIGIN}` : 'not running', 'Run npm run demo, or npm run site in its own terminal.', !needSite);
 

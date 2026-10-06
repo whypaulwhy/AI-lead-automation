@@ -173,6 +173,8 @@ test('describeAiFailure maps errors to plain reasons', () => {
   assert.equal(describeAiFailure('failed_refusal', '', config), reasons.refusal);
   assert.equal(describeAiFailure('failed_parse', 'The reply is not valid JSON.', config), reasons.parse);
   assert.equal(describeAiFailure('failed_http', 'something odd', config), reasons.other);
+  const chainError = '502 - "{\\"type\\":\\"error\\",\\"error\\":{\\"type\\":\\"api_error\\",\\"message\\":\\"All AI providers failed. ollama: connection failed (ECONNREFUSED); claude-code: timed out\\"}}"';
+  assert.equal(describeAiFailure('failed_http', chainError, config), 'every AI in the chain failed (ollama: connection failed (ECONNREFUSED); claude-code: timed out).');
 });
 
 test('a failed email alerts Slack for any non-spam tier', () => {

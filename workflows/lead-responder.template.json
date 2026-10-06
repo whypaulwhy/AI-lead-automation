@@ -312,7 +312,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.ai_request) }}",
         "options": {
-          "timeout": 25000
+          "timeout": 45000
         }
       },
       "id": "fc1ca247-83dd-4ff4-a199-9b2b232ff53f",
@@ -329,9 +329,6 @@
           "name": "%%AI_CRED_NAME%%"
         }
       },
-      "retryOnFail": true,
-      "maxTries": 2,
-      "waitBetweenTries": 1000,
       "onError": "continueErrorOutput"
     },
     {
