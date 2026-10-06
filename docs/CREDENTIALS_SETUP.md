@@ -57,11 +57,22 @@ sheets you share with it.
 1. Open https://slack.com/get-started#/createnew and create a free workspace with the sender email.
    Name it `Cedar & Slate (demo)`.
 2. Create a channel called `new-leads`.
-3. Open https://api.slack.com/apps, click **Create New App**, then **From scratch**. Name it
-   `Lead Responder`, pick your workspace, and click **Create App**.
-4. In the left menu, click **Incoming Webhooks** and switch it **On**.
-5. Scroll down, click **Add New Webhook**, choose `#new-leads`, and click **Allow**.
-6. Copy the **Webhook URL** (it starts with `https://hooks.slack.com/services/`). Keep it for step F.
+3. Open https://api.slack.com/apps and click **Create New App**. A box called "Create new app"
+   opens with four choices.
+4. Under **Or start your own way**, click **Blank app**, then click **Continue**. Don't pick
+   "AI agent" or "Starter app"; they add features this demo doesn't use.
+5. Type the app name `Lead Responder`, pick the `Cedar & Slate (demo)` workspace, and click
+   **Create App**. You land on the app's settings page.
+6. In the left menu, click **Incoming Webhooks**. Switch **Activate Incoming Webhooks** to **On**.
+   More options appear below it.
+7. Scroll down and click **Add New Webhook** (it may say **Add New Webhook to Workspace**).
+8. Choose `#new-leads` and click **Authorize** (it may say **Allow**). You go back to the settings
+   page.
+9. Under **Webhook URLs for Your Workspace**, click **Copy** next to the new URL (it starts with
+   `https://hooks.slack.com/services/`). Keep it for step F, and don't share it anywhere else:
+   anyone who has it can post into your channel.
+
+You should see: one URL listed under "Webhook URLs for Your Workspace", with `#new-leads` next to it.
 
 ## E. Booking link (5 min)
 
@@ -84,7 +95,7 @@ sheets you share with it.
    | `SENDER_EMAIL=` | the sender Gmail address (step A1) |
    | `TEST_INBOX=` | the inbox Gmail address (step A2) |
    | `GOOGLE_SHEET_ID=` | the sheet ID (step B3) |
-   | `SLACK_WEBHOOK_URL=` | the webhook URL (step D6) |
+   | `SLACK_WEBHOOK_URL=` | the webhook URL (step D9) |
    | `BOOKING_URL=` | the booking link (step E3) |
 
 3. Save with Ctrl+S and close Notepad.

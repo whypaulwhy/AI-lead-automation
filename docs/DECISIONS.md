@@ -30,6 +30,7 @@ One line per deviation from `docs/BUILD_SPEC.md`: what changed, and why.
 - **Added `npm run check:env`.** Why: Phase 2 task 2 ("every .env variable prints set") as a command Prit can run himself; it also flags malformed values without printing them.
 - **Section 14 B (Anthropic API key) and the "Anthropic API key" credential are dropped in bridge mode.** Why: see Phase 0 bridge decision.
 - **`SHEET_COLUMNS` lives in `src/logic/row.js` now.** Why: the setup script and Phase 4's `buildSheetRow` must use the same 24 columns.
+- **Slack app: "Blank app" instead of "From scratch" (2026-10-06).** Why: Slack's "Create new app" dialog now offers AI agent, Starter app, From a manifest and Blank app; Blank app is the old "From scratch". Button names follow Slack's current incoming-webhooks docs ("Activate Incoming Webhooks", "Authorize").
 
 ## Phase 3 design plan (2026-10-05)
 
