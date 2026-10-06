@@ -178,3 +178,10 @@ Prit does not want the business to depend on one AI company ("if claude goes dow
 - **Eval, same 9 fixtures:** Claude (Pro plan) 9 of 9 tiers, 8 of 9 lines through the guard, 6 to 10 s. qwen3:4b 9 of 9 tiers, 9 of 9 through the guard, 4.5 to 6.5 s. Known weaknesses of the local model: it rated the active-leak fixture "this_week" instead of "emergency" (still hot, but the emergency line drops out of the email) and once wrote "after last night's rain" for "after the last rain". PC load during the local run: processor 30% average (44% peak), at least 3.1 GB of memory free, graphics card up to 2.98 GB used.
 - **Chain order: `ollama,claude-code`** (local first: free, private, faster; Claude covers when Ollama is off or answers badly). One line in `.env` to swap.
 - **Chain drills on the live webhook:** Ollama closed: Claude answered in 6.4 s (`ollama skipped: connection failed`). No AI available (bridge started with `--providers ollama`, Ollama closed): human fallback in 0.1 s, Slack "Why: every AI in the chain failed (ollama: connection failed (ECONNREFUSED))". Restored and rechecked: doctor "2 AIs ready".
+
+### End of session 2026-10-06
+
+- **Prit confirmed he set the Ollama app's Model location to `D:\`** himself (C: is short on space). The model lives in `D:\blobs`, `D:\manifests`, `D:\metadata`.
+- **Docker's VM capped at 2 GB** in `C:\Users\user\.wslconfig` (`memory=2GB`, `processors=2`, `swap=1GB`, `autoMemoryReclaim=gradual`), at Prit's request ("docker... taking too much memory"). Before: allowed up to 7.4 GB (half the RAM); n8n itself uses about 400 MB. Applied with `wsl --shutdown` and a Docker restart; doctor OK afterwards.
+- **A leftover `llama-server` (2.5 GB) from a force-closed Ollama was stopped**; free memory went from 0.2 GB to 3.1 GB. Noted for the doctor in `docs/NEXT_SESSION.md`.
+- **Handoff for the next session: `docs/NEXT_SESSION.md`**, with Prit's priority: make the system work with his PC off.
