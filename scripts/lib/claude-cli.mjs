@@ -31,7 +31,7 @@ export function parseMessagesRequest(body) {
 }
 
 // Returns { ok: true, response, durationMs } or { ok: false, status, errorType, message, durationMs }.
-export function runClaude({ model, system, userText, schema }, { oauthToken = '', timeoutMs = 60000, bin = 'claude' } = {}) {
+export function runClaude({ model, system, userText, schema }, { oauthToken = '', timeoutMs = 60000, bin = 'claude', signal } = {}) {
   mkdirSync(WORK_DIR, { recursive: true });
   const args = [
     '-p',
@@ -61,6 +61,7 @@ export function runClaude({ model, system, userText, schema }, { oauthToken = ''
     // The customer's text goes in on stdin only, never on the command line.
     const child = spawn(bin, args, { cwd: WORK_DIR, env, windowsHide: true });
     const timer = setTimeout(() => { timedOut = true; child.kill(); }, timeoutMs);
+    signal?.addEventListener('abort', () => child.kill(), { once: true });
     child.stdout.on('data', (chunk) => { stdout += chunk; });
     child.stderr.resume();
     child.on('error', (err) => {

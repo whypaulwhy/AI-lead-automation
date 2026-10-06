@@ -7,9 +7,9 @@
 | 2. Accounts and credentials | done | 2026-10-06 |
 | 3. Landing page | reworked 2026-10-06 after Prit's review; waiting for his approval | |
 | 4. Claude contract, logic and tests | done | 2026-10-06 |
-| 5. Workflows | in progress | |
-| 6. Error handling and failure drills | not started | |
-| 7. Full end-to-end run | not started | |
+| 5. Workflows | done | 2026-10-06 |
+| 6. Error handling and failure drills | done (12 drills, 6 fixes) | 2026-10-06 |
+| 7. Full end-to-end run | fixtures done; waiting for Prit's real form submission | |
 | 8. Docs and demo prep | not started | |
 
 How this file prevents misses: each phase gets a checklist copied item by item from BUILD_SPEC
@@ -74,7 +74,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Form behavior checked: empty submit shows the 6 exact spec messages, focus to first invalid, `aria-describedby` linked, live region announces; errors clear while fixing; server 400 errors shown under the field; success panel replaces the form and takes focus; network failure keeps all typed values
 - [x] Prit reviewed v1 (2026-10-06): read as AI-generated. Reworked per his list (DECISIONS, Phase 3 rework): paper background, square corners, cedar accent, sample inspection notes, privacy policy and terms, local detail. Rechecked at 360 and 1280 px, form validation, no console errors
 - [x] Exit 8.6: visible labels, required stated in words, one polite live region, visible focus (slate ring, yellow on slate bands), DOM-order keyboard flow (honeypot skipped), 44px targets (inline text links exempt), no horizontal scroll at 360
-- [ ] Exit 8.6 "no console errors": the only errors are the CORS failure because the webhook does not exist yet; recheck in Phase 5 after the webhook with Allowed Origins is deployed
+- [x] Exit 8.6 "no console errors": rechecked in Phase 5 with the webhook live; page load is clean, and the browser reads n8n's answers (CORS allows only http://localhost:8080). The only console line is the browser's own note on a deliberate 400 test submission
 - [x] Exit: copy test passes
 - [ ] Exit: Prit approves the look
 - [ ] 0.2 routine
@@ -90,7 +90,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: tone approved by Prit on 2026-10-06 ("yes fix the gutter line, continue to phase 5"). Fix applied: the not_fit_service closing line is now "Hope you find someone good for it." and, for the same double-"Sorry" reason, the not_fit_area closing line is "Good luck getting it fixed."
 - [x] 0.2 routine
 
-## Phase 5 checklist (in progress)
+## Phase 5 checklist (done)
 
 - [x] T1 exact node types, versions and parameters taken from the running n8n 2.41.6 (see DECISIONS, Phase 5)
 - [x] T2 `workflows/lead-responder.template.json` (21 nodes, 5 sticky notes), `workflows/error-alerts.template.json`, 8 `src/n8n/*.entry.js` files
@@ -99,25 +99,58 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Added: CORS checked from the real page (browser reads the 400 field errors); preflight allows only http://localhost:8080
 - [x] Exit: validation has zero errors
 - [x] Exit: smoke test produced a reply email, a Slack alert and a sheet row; execution status success
-- [ ] Prit: open the workflow in n8n and look at the canvas (walkthrough of the five sections); check the inbox, Slack and the sheet for the Maria lead
+- [x] Prit: looked at the canvas and checked the inbox, Slack and the sheet for the Maria lead ("ive checked a,b its working", 2026-10-06)
+- [x] 0.2 routine
+
+## Phase 6 checklist (done)
+
+Prit asked for every worst case, not only the spec's three drills. All against the production webhook; results in DECISIONS (Phase 6).
+
+| # | Drill | Result | Change made |
+|---|---|---|---|
+| 1 | AI unreachable (spec drill 1, bridge-mode equivalent) | needs_review email, Slack with plain reason, row `failed_http`; fallback in 1.1 s | Slack names the reason |
+| 2 | Claude stuck | fallback after 61 s, whole run 70 s | timeouts 25 s / 20 s, 2 tries |
+| 3 | Claude returns non-JSON | needs_review, `failed_parse` | none needed |
+| 4 | Claude refuses | needs_review, `failed_refusal` | none needed |
+| 5 | Claude overloaded (529) | needs_review, reason "busy" | none needed |
+| 6 | Gmail down, nurture lead | was silent; now Slack "Reply failed to send" | email failure always alerts |
+| 7 | Slack down, hot lead (spec drill 2) | email sent, Slack failed, office emailed | office email backup |
+| 8 | Sheet down (spec drill 3) | error workflow did not run; fixed: Slack "Lead Responder failed" with run link | deploy publishes error workflow |
+| 9 | Everything down at once | browser still "Request sent"; every failure recorded; after restore `npm run replay -- 14` delivered it (hot, sent) | replay command |
+| 10 | 6 leads at the same moment | all answered in under 0.8 s, all runs succeed; 1 sheet row lost | Sheets append fixed (see 11) |
+| 11 | Hostile input (broken JSON, empty, 5,000 chars, formula, Spanish) | all handled; another row lost to the same race | `useAppend`: 8 simultaneous writes kept 8 of 8 |
+| 12 | n8n down | doctor names it; site shows retry message | `npm run demo` / `npm run doctor` |
+
+- [x] Exit: the spec's three drills behave as expected (1, 7, 8 above)
+- [x] Exit: everything restored (`npm run deploy`; doctor: everything working)
+- [x] Exit: results recorded here
+- [x] Prompt round 3 (English rule) and stricter guard; eval: 9 of 9 tiers, 8 of 9 without fallback, 0 forbidden text
+- [x] 0.2 routine
+
+## Phase 7 checklist (in progress)
+
+- [x] T1 `npm run send:test` with all 11 fixtures: every tier allowed, email and Slack as expected, 9 of 9 runs success, 9 of 9 sheet rows, injection email clean
+- [x] Exit (fixtures): browser answer 121 to 392 ms; no failed executions in this run
+- [ ] T2 Prit submits the real form in Chrome with his own made-up roofing problem
+- [ ] Exit: the browser shows "Request sent" in under 2 seconds for Prit's submission
 - [ ] 0.2 routine
 
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |
 |---|---|---|
-| AC-01 | `npm test` passes | passing (58 tests) |
-| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | passing (9 of 9; tone approved 2026-10-06) |
+| AC-01 | `npm test` passes | passing (64 tests) |
+| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | passing (latest 8 of 9 after the stricter guard; tone approved 2026-10-06) |
 | AC-03 | Both workflows validate, main workflow published | passing (2026-10-06) |
-| AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | pending (Phase 7) |
-| AC-05 | `send:test` matches 13.1 for all 11 fixtures | pending (Phase 7) |
-| AC-06 | Three failure drills pass, environment restored | pending (Phase 6) |
-| AC-07 | No banned phrases or characters in customer text | site, templates and config passing (copy test); AI slots in Phase 4 |
+| AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | waiting for Prit (fixtures: 0.1 to 0.4 s, runs 13 to 30 s) |
+| AC-05 | `send:test` matches 13.1 for all 11 fixtures | passing (2026-10-06) |
+| AC-06 | Three failure drills pass, environment restored | passing (12 drills, 2026-10-06) |
+| AC-07 | No banned phrases or characters in customer text | passing (copy test plus the guard on every AI line) |
 | AC-08 | Site meets 8.6 at 375, 768, 1280 px | pending (Phase 3) |
 | AC-09 | `check:secrets` passes, `.env` never committed | passing so far |
 | AC-10 | README lets someone run it from zero | pending (Phase 8) |
 | AC-11 | ARCHITECTURE, HANDOVER, DEMO_SCRIPT, CREDENTIALS_SETUP match the build | pending (Phases 2 and 8) |
-| AC-12 | Footer disclaimer, every phone number 555-01xx | site passing (copy test); fixtures in Phase 4 |
+| AC-12 | Footer disclaimer, every phone number 555-01xx | passing (copy test on all pages; fixtures use 555-01xx) |
 
 ## Approvals
 

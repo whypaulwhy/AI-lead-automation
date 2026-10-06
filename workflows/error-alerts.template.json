@@ -3,9 +3,9 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Error alerts\nRuns when the lead workflow fails in production and posts the failed step, the error and a link to the run in Slack.",
-        "height": 400,
-        "width": 760,
+        "content": "## Error alerts\nRuns when the lead workflow fails in production and posts the failed step, the error and a link to the run in Slack. If Slack is down too, it emails the office instead.",
+        "height": 560,
+        "width": 1000,
         "color": 7
       },
       "id": "8311fa32-1c68-4400-a426-3d41a4843d18",
@@ -65,7 +65,35 @@
       ],
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 2000
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "%%FROM_HEADER%%",
+        "toEmail": "%%OFFICE_EMAIL%%",
+        "subject": "={{ $('Format error alert').first().json.office_subject }}",
+        "emailFormat": "text",
+        "text": "={{ $('Format error alert').first().json.office_text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "f1598bc4-2dc2-433f-a7b3-b7fc9fa686ae",
+      "name": "Email the office instead",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        420
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "%%N8N_CRED_SMTP_ID%%",
+          "name": "Gmail SMTP (demo sender)"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -85,6 +113,18 @@
         [
           {
             "node": "Post error to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post error to Slack": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Email the office instead",
             "type": "main",
             "index": 0
           }

@@ -68,6 +68,11 @@ REST APIs. New to n8n, Docker, Node tooling, Google Cloud and Slack apps.
 | `npm run check:env` | Print `set` / `missing` for every `.env` value (never the values) |
 | `npm run setup:credentials` | Create the n8n credentials through the API and write their IDs into `.env` |
 | `npm run validate` | Build, then check both workflows against the node definitions inside the running n8n (stands in for n8n-mcp) |
+| `npm run demo` | After a restart: start Docker, n8n, the AI bridge and the site if needed, redeploy if missing or in drill mode, then check everything (keep open) |
+| `npm run doctor` | Check every part a lead depends on and print the fix for anything broken (changes nothing) |
+| `npm run replay` | List recent runs that went wrong, with advice; `-- <run number>` resends that submission (TEST_INBOX addresses only unless `--allow-real`) |
+| `npm run deploy -- --drill ai-down,email-down,slack-down,sheet-down` | Deploy a deliberately broken copy for failure drills; plain `npm run deploy` restores |
+| `npm run ai:bridge -- --drill slow\|error\|garbage\|refusal` | Run the bridge in a failure-drill mode (no Claude calls) |
 
 ## Map
 

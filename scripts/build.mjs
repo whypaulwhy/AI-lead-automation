@@ -65,7 +65,19 @@ function syntaxCheck(name, code) {
   }
 }
 
-export function build({ siteOnly = false } = {}) {
+// Failure drills (Phase 6): each one swaps a single setting for one that fails the way the real outage
+// would, without touching any secret. A plain build (no drills) restores everything.
+export const DRILLS = {
+  'ai-down': (v) => { v.AI_URL = 'http://host.docker.internal:9/v1/messages'; },
+  'email-down': (v, extra) => {
+    if (!extra.drillSmtpId) throw new Error('email-down needs the drill SMTP credential (deploy.mjs creates it).');
+    v.N8N_CRED_SMTP_ID = extra.drillSmtpId;
+  },
+  'slack-down': (v) => { v.SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/drill-not-a-webhook'; },
+  'sheet-down': (v) => { v.GOOGLE_SHEET_ID = 'drill-sheet-that-does-not-exist'; },
+};
+
+export function build({ siteOnly = false, drills = [], drillSmtpId = '' } = {}) {
   const env = readEnv();
   requireEnv(env, ['N8N_BASE_URL']);
   const endpoint = writeSiteConfig(env);
@@ -92,6 +104,7 @@ export function build({ siteOnly = false } = {}) {
     GOOGLE_SHEET_ID: env.GOOGLE_SHEET_ID,
     GOOGLE_SHEET_TAB: env.GOOGLE_SHEET_TAB,
     FROM_HEADER: `"${config.sender.from_display_name}" <${env.SENDER_EMAIL}>`,
+    OFFICE_EMAIL: env.SENDER_EMAIL,
     N8N_CRED_SMTP_ID: env.N8N_CRED_SMTP_ID,
     N8N_CRED_GOOGLE_SHEETS_ID: env.N8N_CRED_GOOGLE_SHEETS_ID,
     // AI_MODE=bridge sends the request to the local bridge (Pro plan); api sends it to Anthropic.
@@ -99,6 +112,11 @@ export function build({ siteOnly = false } = {}) {
     AI_CRED_ID: bridge ? env.N8N_CRED_AI_BRIDGE_ID : env.N8N_CRED_ANTHROPIC_ID,
     AI_CRED_NAME: bridge ? 'AI bridge token' : 'Anthropic API key',
   };
+
+  for (const drill of drills) {
+    if (!DRILLS[drill]) throw new Error(`Unknown drill "${drill}". Use: ${Object.keys(DRILLS).join(', ')}.`);
+    DRILLS[drill](scalarValues, { drillSmtpId });
+  }
 
   const outputs = {};
   for (const [name, outFile] of Object.entries(WORKFLOWS)) {
@@ -119,7 +137,7 @@ export function build({ siteOnly = false } = {}) {
     writeFileSync(path(outFile), `${JSON.stringify(workflow, null, 2)}\n`);
     outputs[name] = workflow;
   }
-  return { endpoint, workflows: outputs, aiMode: bridge ? 'bridge' : 'api' };
+  return { endpoint, workflows: outputs, aiMode: bridge ? 'bridge' : 'api', drills };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

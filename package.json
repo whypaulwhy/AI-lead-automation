@@ -21,6 +21,9 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:env": "node scripts/check-env.mjs",
     "setup:credentials": "node scripts/setup-credentials.mjs",
-    "validate": "node scripts/build.mjs && node scripts/validate-workflows.mjs"
+    "validate": "node scripts/build.mjs && node scripts/validate-workflows.mjs",
+    "demo": "node scripts/demo.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "replay": "node scripts/replay.mjs"
   }
 }

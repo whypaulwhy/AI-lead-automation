@@ -5,7 +5,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { parseEnv } from 'node:util';
+import { parseArgs, parseEnv } from 'node:util';
 import { parseMessagesRequest, runClaude } from './lib/claude-cli.mjs';
 
 const envPath = fileURLToPath(new URL('../.env', import.meta.url));
@@ -18,7 +18,27 @@ const OAUTH_TOKEN = env.CLAUDE_CODE_OAUTH_TOKEN || '';
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_CONCURRENT = 2;
 const MAX_QUEUED = 20;
-const TIMEOUT_MS = 60000;
+// Must stay below the n8n HTTP Request timeout (25 s), so a slow call ends here with a clean 504
+// and n8n's retry starts fresh instead of queueing behind a call nobody is waiting for.
+const TIMEOUT_MS = 20000;
+
+// Failure drills (Phase 6): npm run ai:bridge -- --drill slow|error|garbage|refusal
+// slow: never answers (Claude stuck); error: 529 overloaded; garbage: 200 with text that is not JSON;
+// refusal: 200 with stop_reason "refusal". No Claude call is made in drill mode.
+const { values: cli } = parseArgs({ options: { drill: { type: 'string', default: '' } } });
+const DRILL = cli.drill;
+if (DRILL && !['slow', 'error', 'garbage', 'refusal'].includes(DRILL)) {
+  console.error('Unknown drill. Use slow, error, garbage or refusal.');
+  process.exit(1);
+}
+
+function drillResponse(model) {
+  const message = (content, stop) => ({ id: 'msg_drill', type: 'message', role: 'assistant', model, content, stop_reason: stop, stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } });
+  if (DRILL === 'error') return { ok: false, status: 529, errorType: 'overloaded_error', message: 'Drill: overloaded.' };
+  if (DRILL === 'garbage') return { ok: true, response: message([{ type: 'text', text: 'Sorry, I can only answer in prose today.' }], 'end_turn') };
+  if (DRILL === 'refusal') return { ok: true, response: message([], 'refusal') };
+  return null;
+}
 
 if (TOKEN.length < 32) {
   console.error('AI_BRIDGE_TOKEN is missing or too short in .env. Phase 1 generates it.');
@@ -75,7 +95,7 @@ function log(status, started, extra = '') {
 
 const server = createServer(async (req, res) => {
   const path = (req.url || '').split('?')[0];
-  if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true });
+  if (req.method === 'GET' && path === '/health') return send(res, 200, { ok: true, drill: DRILL || null });
   if (req.method !== 'POST' || path !== '/v1/messages') return sendError(res, 404, 'not_found_error', 'Use POST /v1/messages.');
 
   const started = Date.now();
@@ -98,7 +118,20 @@ const server = createServer(async (req, res) => {
     return sendError(res, 400, 'invalid_request_error', parsed.message);
   }
 
-  const result = await withSlot(() => runClaude(parsed.request, { oauthToken: OAUTH_TOKEN, timeoutMs: TIMEOUT_MS }));
+  // If n8n gives up (timeout) while this request waits or runs, drop it: no point spending plan usage.
+  const abort = new AbortController();
+  res.on('close', () => { if (!res.writableFinished) abort.abort(); });
+  const result = await withSlot(() => (abort.signal.aborted
+    ? { ok: false, status: 499, errorType: 'client_closed', message: 'n8n stopped waiting.' }
+    : DRILL === 'slow'
+      ? new Promise((resolve) => { abort.signal.addEventListener('abort', () => resolve(null), { once: true }); })
+      : DRILL
+        ? drillResponse(parsed.request.model)
+        : runClaude(parsed.request, { oauthToken: OAUTH_TOKEN, timeoutMs: TIMEOUT_MS, signal: abort.signal })));
+  if (abort.signal.aborted) {
+    log(499, started, 'n8n stopped waiting; request dropped');
+    return undefined;
+  }
   if (result === null) {
     log(503, started, 'queue full');
     return sendError(res, 503, 'overloaded_error', 'Too many requests are waiting. Try again shortly.');
@@ -123,5 +156,6 @@ server.on('error', (err) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`AI bridge listening on http://${HOST}:${PORT} (Claude Code headless on your Claude plan).`);
+  if (DRILL) console.log(`DRILL MODE: ${DRILL}. No real Claude calls. Stop with Ctrl+C and start normally afterwards.`);
   console.log(`Login: ${OAUTH_TOKEN ? 'CLAUDE_CODE_OAUTH_TOKEN from .env' : 'your normal Claude Code login'}. Press Ctrl+C to stop.`);
 });

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLeadResult, buildSlackText, checkCustomerText, composeReply } from '../src/logic/compose.js';
+import { buildLeadResult, buildSlackText, checkCustomerText, composeReply, describeAiFailure, slackToEmail } from '../src/logic/compose.js';
 import { BOOKING_URL, config, fixtures } from './helpers.js';
 
 const rules = config.copy_rules;
@@ -124,7 +124,7 @@ function resultFor(tier, extra = {}) {
 }
 
 test('Slack text for a hot lead', () => {
-  const text = buildSlackText({ result: resultFor('hot'), emailSent: true, sentTime: '2:14 PM', config });
+  const text = buildSlackText({ result: resultFor('hot'), emailStatus: 'sent', sentTime: '2:14 PM', config });
   assert.equal(text, [
     '*Hot lead* (score 93)',
     'Maria Delgado, 78704, (512) 555-0182',
@@ -136,19 +136,81 @@ test('Slack text for a hot lead', () => {
 
 test('Slack text escapes customer text, falls back for phone, and flags medium spam', () => {
   const result = resultFor('warm', { lead: { full_name: 'Bo <b>&</b>', phone_display: '' }, ai: { ...ai, spam_likelihood: 'medium', issue_summary: 'a < b > c & d' } });
-  const text = buildSlackText({ result, emailSent: false, sentTime: '', config });
+  const text = buildSlackText({ result, emailStatus: 'failed', sentTime: '', config });
   assert.ok(text.includes('Bo &lt;b&gt;&amp;&lt;/b&gt;, 78704, no phone given'));
   assert.ok(text.includes('a &lt; b &gt; c &amp; d'));
   assert.ok(text.includes('The reply email failed to send.'));
-  assert.ok(text.endsWith('Could be spam. Check before calling.'));
+  const lines = text.split('\n');
+  assert.equal(lines[lines.length - 2], 'Could be spam. Check before calling.');
+  assert.match(lines[lines.length - 1], /^<https:.*\|Open the lead log>$/);
   assert.ok(text.includes('<https://docs.google.com/spreadsheets/d/TEST_SHEET_ID/edit|Open the lead log>'));
 });
 
 test('Slack text for needs_review previews the message; no alert for other tiers', () => {
   const long = `${'word '.repeat(40)}end`;
   const result = { ...resultFor('needs_review', { ai: null, lead: { message: long } }), score: null };
-  const text = buildSlackText({ result, emailSent: true, sentTime: '2:14 PM', config });
+  const text = buildSlackText({ result, emailStatus: 'sent', sentTime: '2:14 PM', config });
   const preview = text.match(/Their message: "(.*)"/)[1];
   assert.ok(preview.endsWith('...') && preview.length <= 143, preview);
-  assert.equal(buildSlackText({ result: resultFor('nurture'), emailSent: true, sentTime: '', config }), '');
+  assert.equal(buildSlackText({ result: resultFor('nurture'), emailStatus: 'sent', sentTime: '', config }), '');
+});
+
+test('needs_review alerts say why the AI step failed, in plain words', () => {
+  const base = { ...resultFor('needs_review', { ai: null }), score: null, ai_status: 'failed_http', ai_error: 'connect ECONNREFUSED 192.168.65.254:8787' };
+  const text = buildSlackText({ result: base, emailStatus: 'sent', sentTime: '2:14 PM', config });
+  assert.ok(text.includes('Why: the AI bridge is not running on the demo PC.'), text);
+  assert.ok(!text.includes('failed to send'));
+  const bothFailed = buildSlackText({ result: base, emailStatus: 'failed', sentTime: '', config });
+  assert.ok(bothFailed.includes('The reply email failed to send. Please reply by hand.'));
+});
+
+test('describeAiFailure maps errors to plain reasons', () => {
+  const reasons = config.slack.ai_failure_reasons;
+  assert.equal(describeAiFailure('failed_http', 'connect ECONNREFUSED 127.0.0.1:8787', config), reasons.bridge_down);
+  assert.equal(describeAiFailure('failed_http', 'Request failed with status code 401', config), reasons.auth);
+  assert.equal(describeAiFailure('failed_http', 'timeout of 30000ms exceeded', config), reasons.timeout);
+  assert.equal(describeAiFailure('failed_http', 'The service is receiving too many requests (529)', config), reasons.overloaded);
+  assert.equal(describeAiFailure('failed_refusal', '', config), reasons.refusal);
+  assert.equal(describeAiFailure('failed_parse', 'The reply is not valid JSON.', config), reasons.parse);
+  assert.equal(describeAiFailure('failed_http', 'something odd', config), reasons.other);
+});
+
+test('a failed email alerts Slack for any non-spam tier', () => {
+  const nurture = buildSlackText({ result: resultFor('nurture'), emailStatus: 'failed', sentTime: '', config });
+  assert.ok(nurture.startsWith('*Reply failed to send* (nurture lead)'), nurture);
+  assert.ok(nurture.includes('Please reply by hand.'));
+  const notFit = buildSlackText({ result: resultFor('not_fit'), emailStatus: 'failed', sentTime: '', config });
+  assert.ok(notFit.startsWith('*Reply failed to send* (not fit lead)'), notFit);
+  assert.equal(buildSlackText({ result: resultFor('nurture'), emailStatus: 'skipped', sentTime: '', config }), '');
+  assert.equal(buildSlackText({ result: resultFor('spam'), emailStatus: 'failed', sentTime: '', config }), '');
+});
+
+test('slackToEmail turns an alert into a plain office email', () => {
+  const text = buildSlackText({ result: resultFor('hot', { lead: { full_name: 'Bo & Co' } }), emailStatus: 'sent', sentTime: '2:14 PM', config });
+  const email = slackToEmail(text, config);
+  assert.equal(email.subject, 'Lead alert (Slack is down): Hot lead (score 93)');
+  assert.ok(email.text.includes('Bo & Co, 78704'));
+  assert.ok(email.text.includes('Open the lead log: https://docs.google.com/spreadsheets/d/TEST_SHEET_ID/edit'));
+  assert.doesNotMatch(email.text, /[*<>]|&amp;/);
+});
+
+test('the sheet link stays the last line of every alert', () => {
+  const review = { ...resultFor('needs_review', { ai: null }), score: null, ai_status: 'failed_http', ai_error: 'timeout of 25000ms exceeded' };
+  const text = buildSlackText({ result: review, emailStatus: 'failed', sentTime: '', config });
+  const lines = text.split('\n');
+  assert.deepEqual(lines.slice(-3, -1), ['Why: Claude took too long to answer.', 'The reply email failed to send. Please reply by hand.']);
+  assert.match(lines[lines.length - 1], /\|Open the lead log>$/);
+});
+
+test('the guard rejects joined sentences and lines that say what we will do', () => {
+  const message = 'Hail on Tuesday cracked a skylight. The adjuster is coming Friday.';
+  for (const line of [
+    'Sorry about the hail damage on Tuesday and the cracked skylight; we can help before Friday.',
+    'Sorry about the cracked skylight, and we will get someone out before the adjuster.',
+    "Sorry about the skylight, we'll take care of it.",
+    'Sorry about the skylight and we could look at it soon.',
+  ]) {
+    assert.equal(checkCustomerText(line, 'opening_line', message, rules).ok, false, line);
+  }
+  assert.ok(checkCustomerText('Sorry to hear the hail cracked your skylight on Tuesday.', 'opening_line', message, rules).ok);
 });

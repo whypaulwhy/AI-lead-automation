@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "content": "## 4. Alert the team\nHot and warm leads, and any lead Claude could not read, go to Slack with a link to the lead log.",
+        "content": "## 4. Alert the team\nHot and warm leads, any lead Claude could not read, and any lead whose reply failed to send go to Slack with a link to the lead log. If Slack is down, the same alert goes to the office by email.",
         "height": 620,
         "width": 880,
         "color": 7
@@ -312,7 +312,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.ai_request) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 25000
         }
       },
       "id": "fc1ca247-83dd-4ff4-a199-9b2b232ff53f",
@@ -330,8 +330,8 @@
         }
       },
       "retryOnFail": true,
-      "maxTries": 3,
-      "waitBetweenTries": 2000,
+      "maxTries": 2,
+      "waitBetweenTries": 1000,
       "onError": "continueErrorOutput"
     },
     {
@@ -460,7 +460,7 @@
           "conditions": [
             {
               "id": "64d919af-5a12-4f93-af9b-b8485a3cd364",
-              "leftValue": "={{ $('Lead result').first().json.slack_alert }}",
+              "leftValue": "={{ $('Lead result').first().json.slack_alert || $prevNode.name === 'Email failed' }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -533,6 +533,33 @@
         3420,
         420
       ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "%%FROM_HEADER%%",
+        "toEmail": "%%OFFICE_EMAIL%%",
+        "subject": "={{ $('Write Slack message').first().json.office_subject }}",
+        "emailFormat": "text",
+        "text": "={{ $('Write Slack message').first().json.office_text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7e28129e-4f56-4654-a7ee-fff498a0fa73",
+      "name": "Email the office instead",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        3420,
+        580
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "%%N8N_CRED_SMTP_ID%%",
+          "name": "Gmail SMTP (demo sender)"
+        }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -790,7 +817,8 @@
           "convertFieldsToString": false
         },
         "options": {
-          "cellFormat": "RAW"
+          "cellFormat": "RAW",
+          "useAppend": true
         }
       },
       "id": "db0a2f5d-32f4-4c39-a6b5-d66db2a6ca62",
@@ -1036,6 +1064,17 @@
       ]
     },
     "Slack failed": {
+      "main": [
+        [
+          {
+            "node": "Email the office instead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email the office instead": {
       "main": [
         [
           {

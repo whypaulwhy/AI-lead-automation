@@ -33,7 +33,9 @@ export function checkCustomerText(text, kind, leadMessage, rules) {
     if (value.length < 30) reasons.push('shorter than 30 characters');
     if (value.length > 200) reasons.push('longer than 200 characters');
     if (!/[.?]$/.test(value)) reasons.push('does not end with . or ?');
-    if (/[.?]\s+[A-Z]/.test(value)) reasons.push('more than one sentence');
+    if (/[.?]\s+[A-Z]/.test(value) || value.includes(';')) reasons.push('more than one sentence');
+    // Promises and next steps belong to the template, never to Claude's line (Phase 6 eval finding).
+    if (/\bwe(?:'ll|’ll|\s+will|\s+can|\s+could)\b/i.test(value)) reasons.push('says what we will do');
     if (COMPOSE_GREETING_RE.test(value)) reasons.push('starts with a greeting');
   } else if (kind === 'subject_topic') {
     const words = value.split(/\s+/).length;
@@ -123,14 +125,32 @@ function composePreview(message, limit) {
   return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:]+$/, '')}...`;
 }
 
-// Slack alert text for hot, warm and needs_review leads; '' for tiers without an alert.
-// `sentTime` is the local send time like "2:14 PM", supplied by the caller.
-export function buildSlackText({ result, emailSent, sentTime, config }) {
+// Plain-words reason for a failed AI step, from the status and the error text n8n or the parser gave.
+export function describeAiFailure(aiStatus, aiError, config) {
+  const reasons = config.slack.ai_failure_reasons;
+  const error = String(aiError || '');
+  if (aiStatus === 'failed_refusal') return reasons.refusal;
+  if (aiStatus === 'failed_parse' || aiStatus === 'failed_max_tokens') return reasons.parse;
+  if (/ECONNREFUSED|ENOTFOUND|EHOSTUNREACH|connect/i.test(error)) return reasons.bridge_down;
+  if (/\b401\b|authentication|unauthori[sz]ed|forbidden|\b403\b/i.test(error)) return reasons.auth;
+  if (/timeout|timed out|ETIMEDOUT|ECONNABORTED|\b504\b/i.test(error)) return reasons.timeout;
+  if (/\b529\b|\b503\b|overloaded|busy/i.test(error)) return reasons.overloaded;
+  return reasons.other;
+}
+
+// Slack alert text, or '' when no alert is needed. Hot, warm and needs_review always alert; any
+// other non-spam lead alerts only when its reply email failed, so a person can answer by hand.
+// `emailStatus` is "sent", "failed" or "skipped"; `sentTime` is the local time like "2:14 PM".
+export function buildSlackText({ result, emailStatus, sentTime, config }) {
   const slack = config.slack;
-  if (!slack.alert_tiers.includes(result.tier)) return '';
+  const emailFailed = emailStatus === 'failed';
+  const alertTier = slack.alert_tiers.includes(result.tier);
+  if (!alertTier && !(emailFailed && result.tier !== 'spam')) return '';
   const { lead, ai } = result;
-  const replyStatusLine = emailSent ? composeFill(slack.reply_sent_line, { sent_time: sentTime }) : slack.reply_failed_line;
-  let text = composeFill(slack[result.tier], {
+  const replyStatusLine = emailStatus === 'sent' ? composeFill(slack.reply_sent_line, { sent_time: sentTime }) : slack.reply_failed_line;
+  const template = alertTier ? slack[result.tier] : slack.email_failed;
+  let text = composeFill(template, {
+    tier: result.tier.replace('_', ' '),
     score: result.score === null ? '' : result.score,
     full_name: composeEscapeSlack(lead.full_name),
     zip: composeEscapeSlack(lead.zip),
@@ -140,8 +160,29 @@ export function buildSlackText({ result, emailSent, sentTime, config }) {
     message_preview: composeEscapeSlack(composePreview(lead.message, 140)),
     sheet_link: composeFill(slack.sheet_link, { sheet_url: config.sheet_url }),
   });
-  if (ai && ai.spam_likelihood === 'medium') text += `\n${slack.spam_medium_line}`;
-  return text;
+  // Extra lines go above the sheet link, which stays last.
+  const extras = [];
+  if (result.tier === 'needs_review') {
+    extras.push(composeFill(slack.ai_reason_line, { reason: describeAiFailure(result.ai_status, result.ai_error, config) }));
+    if (emailFailed) extras.push(slack.reply_failed_line);
+  }
+  if (ai && ai.spam_likelihood === 'medium') extras.push(slack.spam_medium_line);
+  if (extras.length === 0) return text;
+  const lines = text.split('\n');
+  const link = composeFill(slack.sheet_link, { sheet_url: config.sheet_url });
+  const at = lines[lines.length - 1] === link ? lines.length - 1 : lines.length;
+  lines.splice(at, 0, ...extras);
+  return lines.join('\n');
+}
+
+// The same alert as a plain email for the office, used when Slack itself is down.
+export function slackToEmail(slackText, config) {
+  const plain = slackText
+    .replace(/<([^|>]+)\|([^>]+)>/g, '$2: $1')
+    .replace(/\*([^*\n]+)\*/g, '$1')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const headline = plain.split('\n')[0];
+  return { subject: composeFill(config.slack.office_subject, { headline }), text: plain };
 }
 
 // The lead result object (spec 11.6) that the email, Slack and sheet steps read.

@@ -133,3 +133,26 @@ Checked against 8.5: no gradients, blur, illustrations, emoji, icons in inputs, 
 - **`npm run deploy` publishes through `POST /workflows/{id}/publish`.** Why: n8n 2.x renamed activate to publish; the API serves both, publish is the current term.
 - **`send-test-leads.mjs` also refuses to run when the workflow isn't published or the AI bridge isn't running, and reads tier, AI, email and Slack status from each execution.** Why: clear messages instead of silent fallbacks, and a one-screen result.
 - **`isExecuted` (spec 9.4) works in 2.41.6.** Verified by the smoke test: email_status and slack_status came out "sent".
+
+## Phase 6: failure drills and worst-case hardening (2026-10-06)
+
+Prit asked for the whole setup to be tested "when everything feels like it's falling apart". Twelve drills ran against the production webhook; the spec's three are drills 1, 7 and 8.
+
+- **Drills use build switches instead of Prit editing credentials** (`npm run deploy -- --drill ai-down|email-down|slack-down|sheet-down`, any combination; `npm run deploy` restores), plus bridge switches (`npm run ai:bridge -- --drill slow|error|garbage|refusal`). Why: no secret is touched or seen, every drill is repeatable, and "restore" is one command. `email-down` uses a harmless n8n credential pointing at `smtp.unreachable.invalid`, so Gmail never sees failed logins.
+- **The error workflow is published by deploy.** Why: n8n 2.41.6 logged "Workflow ... is not active and cannot be executed"; spec 9.5 allowed publishing if the version requires it. Found by drill 8.
+- **Google Sheets append uses Google's own append call (`useAppend`).** Why: n8n's default counts rows and writes to the next one, so two leads logged at the same moment overwrite each other. Drills 10 and 11 lost 2 of 18 rows; with the fix, 8 simultaneous writes kept 8 of 8 rows in the right columns.
+- **AI request: timeout 25 s, 2 tries, 1 s apart (spec: 30 s, 3 tries, 2 s). Bridge gives up at 20 s and cancels work n8n stopped waiting for.** Why: with Claude stuck, the old settings delayed the customer's reply to about 70 s (drill 2) and let abandoned calls hold the two Claude slots. Worst case is now about 50 to 60 s.
+- **A failed reply email always alerts Slack (any tier except spam), with a new `email_failed` template.** Why: before, a nurture or not_fit lead whose email failed was only visible in the sheet (drill 6).
+- **If Slack fails, the same alert is emailed to the office (`SENDER_EMAIL`), in both workflows.** slack_status records `failed, office emailed` or `failed, office email failed too`. Why: Slack down meant nobody heard about a hot lead (drill 7).
+- **needs_review alerts say why in plain words** (bridge not running, login rejected, too slow, busy, declined, unexpected format), and extra lines sit above the sheet link. Why: "the AI step failed" alone doesn't tell Prit what to fix.
+- **New commands: `npm run demo` (start everything after a restart), `npm run doctor` (check everything, change nothing), `npm run replay` (list runs that went wrong with advice; resend one by number).** Replay refuses addresses that aren't TEST_INBOX plus-addresses unless `--allow-real`, and says when resending would email a customer twice.
+- **Prompt round 3 (last of 3): write every text field in English; "Thanks for reaching out" added as a bad example.** Why: drill 11 sent a Spanish lead (the reply came back in English, as wanted); evals kept producing "Thanks for reaching out".
+- **Copy guard: opening lines may not contain a semicolon or "we can / we will / we'll / we could".** Why: the eval produced "Sorry about the hail damage on Tuesday; we can help before your insurance adjuster arrives Friday." (two sentences and a promise), which the old guard passed.
+- **Error Trigger output in 2.41.6:** `execution{id,url,error,lastNodeExecuted,mode,executionContext}`, `workflow{id,name}`; `execution.url` is provided.
+- **Capacity on this PC: about 6 simultaneous leads within the timeout** (2 Claude slots, 6 to 11 s each). More would time out once and succeed on the retry.
+- **Known limits, left as they are:** a message over 2,000 characters gets the spec's "at least 10 characters" text (the form's maxlength makes this unreachable for visitors); duplicate submissions are not merged; when n8n itself is down the visitor sees "We couldn't send that... try again" and nothing is stored.
+- `config/business.json` is now written by `JSON.stringify` (the ZIP list is one per line); content is unchanged apart from the new Slack texts.
+
+## Phase 7 (2026-10-06)
+
+- All 11 fixtures sent to the live webhook: every tier inside its allowed list, email and Slack exactly as expected, browser answer 121 to 392 ms, 9 of 9 runs successful and 9 of 9 rows in the sheet. The prompt_injection email contains none of "50", "%", "discount".

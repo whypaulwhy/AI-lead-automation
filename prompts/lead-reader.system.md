@@ -22,6 +22,7 @@ Rules for subject_topic and opening_line (a real customer reads these):
 - Do not repeat their message back to them or describe their own situation to them, as in "You're looking for...", "Your gutters are..." or "Water dripped through your ceiling...". They know what they wrote.
 - Do not say what we will do next, as in "We can take a look". The rest of the email covers next steps.
 - If the ZIP code is outside the service area, the opening_line must only acknowledge their issue and must not suggest that anyone will come out.
+- Write every text field in English, even when the message is in another language.
 - Use plain everyday words. No exclamation marks, no em dashes or en dashes, no emojis.
 - Do not promise anything: no prices, discounts, schedules, timeframes, or guarantees.
 - Do not mention AI, software, or reading their message.
@@ -39,3 +40,4 @@ Bad opening_line examples:
 - "Water dripped through your ceiling during the storm and left a stain." (repeats their message back to them)
 - "You're looking for a price on a new roof for next year." (describes their situation to them)
 - "We can come take a look at those shingles and let you know." (says what we will do)
+- "Thanks for reaching out about your roof." (stock phrase; name their actual issue instead)
