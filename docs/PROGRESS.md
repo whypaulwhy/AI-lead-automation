@@ -5,7 +5,7 @@
 | 0. Preflight and repo skeleton | done | 2026-10-05 |
 | 1. n8n running locally | done | 2026-10-05 |
 | 2. Accounts and credentials | done | 2026-10-06 |
-| 3. Landing page | reworked 2026-10-06 after Prit's review; waiting for his approval | |
+| 3. Landing page | done (reworked after Prit's review, then approved) | 2026-10-06 |
 | 4. Claude contract, logic and tests | done | 2026-10-06 |
 | 5. Workflows | done | 2026-10-06 |
 | 6. Error handling and failure drills | done (12 drills, 6 fixes) | 2026-10-06 |
@@ -65,7 +65,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: sheet tab "Leads" has the 24 headers in A1:X1; the robot account wrote them, so it has Editor access
 - [x] 0.2 routine
 
-## Phase 3 checklist (in progress, parallel with Phase 2)
+## Phase 3 checklist (done)
 
 - [x] T1 design plan in DECISIONS.md (8.4), checked against 8.5
 - [x] T2 `site/` built per Section 8; `site/config.js` from `npm run build -- --site-only`
@@ -76,8 +76,8 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit 8.6: visible labels, required stated in words, one polite live region, visible focus (slate ring, yellow on slate bands), DOM-order keyboard flow (honeypot skipped), 44px targets (inline text links exempt), no horizontal scroll at 360
 - [x] Exit 8.6 "no console errors": rechecked in Phase 5 with the webhook live; page load is clean, and the browser reads n8n's answers (CORS allows only http://localhost:8080). The only console line is the browser's own note on a deliberate 400 test submission
 - [x] Exit: copy test passes
-- [ ] Exit: Prit approves the look
-- [ ] 0.2 routine
+- [x] Exit: Prit approved the reworked look on 2026-10-06 ("the new look works"); rechecked at 375 and 768 px: no horizontal scroll, all targets at least 44 px, no console errors
+- [x] 0.2 routine
 
 ## Phase 4 checklist (done)
 
@@ -146,7 +146,7 @@ Prit asked for every worst case, not only the spec's three drills. All against t
 | AC-05 | `send:test` matches 13.1 for all 11 fixtures | passing (2026-10-06) |
 | AC-06 | Three failure drills pass, environment restored | passing (12 drills, 2026-10-06) |
 | AC-07 | No banned phrases or characters in customer text | passing (copy test plus the guard on every AI line) |
-| AC-08 | Site meets 8.6 at 375, 768, 1280 px | pending (Phase 3) |
+| AC-08 | Site meets 8.6 at 375, 768, 1280 px | passing (also 360 px; 2026-10-06) |
 | AC-09 | `check:secrets` passes, `.env` never committed | passing so far |
 | AC-10 | README lets someone run it from zero | pending (Phase 8) |
 | AC-11 | ARCHITECTURE, HANDOVER, DEMO_SCRIPT, CREDENTIALS_SETUP match the build | pending (Phases 2 and 8) |
