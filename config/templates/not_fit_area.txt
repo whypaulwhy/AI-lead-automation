@@ -4,6 +4,6 @@ Hi {first_name},
 
 Unfortunately {zip} is outside the area our crews cover, so we can't take this one on. I'd look for a roofer close to you with recent local reviews and proof of insurance.
 
-Sorry we couldn't help this time.
+Good luck getting it fixed.
 
 {signature}

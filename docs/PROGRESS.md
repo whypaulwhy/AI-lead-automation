@@ -6,8 +6,8 @@
 | 1. n8n running locally | done | 2026-10-05 |
 | 2. Accounts and credentials | done | 2026-10-06 |
 | 3. Landing page | reworked 2026-10-06 after Prit's review; waiting for his approval | |
-| 4. Claude contract, logic and tests | in progress | |
-| 5. Workflows | not started | |
+| 4. Claude contract, logic and tests | done | 2026-10-06 |
+| 5. Workflows | in progress | |
 | 6. Error handling and failure drills | not started | |
 | 7. Full end-to-end run | not started | |
 | 8. Docs and demo prep | not started | |
@@ -79,7 +79,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [ ] Exit: Prit approves the look
 - [ ] 0.2 routine
 
-## Phase 4 checklist (in progress)
+## Phase 4 checklist (done)
 
 - [x] T1 `config/business.json` and templates (written in Phase 3); `prompts/*` and `fixtures/leads.json` copied from the spec by script
 - [x] T2 `src/logic/*` (validate, ai, score, compose, row) and `tests/*.test.js`: 58 tests pass; the five logic files combine into one Code node and pass `node --check`
@@ -87,15 +87,15 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] T4 eval run 1: wording passed but 4 of 9 calls timed out; fixed by turning off Claude Code's default thinking
 - [x] T4 prompt round 1 (stop parroting the message back) and round 2 (homeowner rule, one detail, no "thanks for reaching out")
 - [x] Exit: eval passes: 9 of 9 tiers allowed, 0 parse failures, 9 of 9 lines pass the guard without fallback, 6 to 11 s per lead
-- [ ] Exit: Prit's approval of the tone, written here
-- [ ] 0.2 routine
+- [x] Exit: tone approved by Prit on 2026-10-06 ("yes fix the gutter line, continue to phase 5"). Fix applied: the not_fit_service closing line is now "Hope you find someone good for it." and, for the same double-"Sorry" reason, the not_fit_area closing line is "Good luck getting it fixed."
+- [x] 0.2 routine
 
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |
 |---|---|---|
 | AC-01 | `npm test` passes | passing (58 tests) |
-| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | eval passing 9 of 9; tone waiting for Prit |
+| AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | passing (9 of 9; tone approved 2026-10-06) |
 | AC-03 | Both workflows validate, main workflow published | pending (Phase 5) |
 | AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | pending (Phase 7) |
 | AC-05 | `send:test` matches 13.1 for all 11 fixtures | pending (Phase 7) |

@@ -4,6 +4,6 @@ Hi {first_name},
 
 {decline_line}
 
-Sorry we're not the right fit for this one.
+Hope you find someone good for it.
 
 {signature}
