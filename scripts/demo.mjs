@@ -77,7 +77,12 @@ if (env.AI_MODE !== 'api' && chain.includes('ollama')) {
     const exe = join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Ollama', 'ollama app.exe');
     if (existsSync(exe)) {
       step('Local AI: starting Ollama...');
-      spawn(exe, [], { detached: true, stdio: 'ignore' }).unref();
+      // A terminal opened before OLLAMA_MODELS was set would start Ollama on its default, empty
+      // C: folder. Read the user setting from the registry and pass it on explicitly.
+      const reg = await run('reg.exe', ['query', 'HKCU\\Environment', '/v', 'OLLAMA_MODELS'], 10000);
+      const folder = /OLLAMA_MODELS\s+REG_\w+\s+(.+)/.exec(reg.stdout)?.[1]?.trim();
+      const childEnv = folder ? { ...process.env, OLLAMA_MODELS: folder } : process.env;
+      spawn(exe, [], { detached: true, stdio: 'ignore', env: childEnv }).unref();
       await waitFor(ollamaUp, 60, 'Ollama');
     }
   }

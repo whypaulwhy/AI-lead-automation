@@ -14,6 +14,29 @@ import { parseMessagesRequest, runClaude } from './claude-cli.mjs';
 
 const PROVIDER_TIMEOUT_MS = { 'claude-code': 20000, ollama: 25000, openai: 15000, anthropic: 15000 };
 
+// Measured on the RTX 2050 (4 GB): Ollama's default kept a third of qwen3:4b on the processor
+// (10 tokens/s, 15 to 24 s per lead). num_gpu 99 puts every layer on the graphics card (26 tokens/s,
+// about 5 s per lead). 3,072 tokens of context fits the longest allowed message plus the answer.
+// The warm-up in the bridge must use the same options, or Ollama reloads the model.
+export const OLLAMA_OPTIONS = { temperature: 0.3, num_ctx: 3072, num_gpu: 99 };
+export const OLLAMA_KEEP_ALIVE = '60m';
+
+const ollamaBase = (env) => (env.OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+
+// Loads the model onto the graphics card ahead of the first lead (keep_alive '60m'), or frees it
+// (keepAlive 0). Returns the seconds it took, or throws.
+export async function ollamaPreload(env, keepAlive = OLLAMA_KEEP_ALIVE, timeoutMs = 180000) {
+  const started = Date.now();
+  const res = await fetch(`${ollamaBase(env)}/api/generate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ model: env.OLLAMA_MODEL, prompt: '', keep_alive: keepAlive, options: OLLAMA_OPTIONS }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!res.ok) throw new Error(`Ollama answered ${res.status}`);
+  return (Date.now() - started) / 1000;
+}
+
 export const PROVIDER_NAMES = ['claude-code', 'ollama', 'openai', 'anthropic'];
 
 export function providersFromEnv(env) {
@@ -63,15 +86,14 @@ const CALLERS = {
   },
 
   async ollama(req, env, signal) {
-    const base = (env.OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
-    const r = await postJson(`${base}/api/chat`, {
+    const r = await postJson(`${ollamaBase(env)}/api/chat`, {
       model: env.OLLAMA_MODEL,
       messages: [{ role: 'system', content: req.system }, { role: 'user', content: req.userText }],
       format: req.schema,
       stream: false,
       think: false,
-      keep_alive: '10m',
-      options: { temperature: 0.3, num_ctx: 4096 },
+      keep_alive: OLLAMA_KEEP_ALIVE,
+      options: OLLAMA_OPTIONS,
     }, {}, signal);
     if (!r.ok) return r;
     const stop = r.json.done_reason === 'length' ? 'max_tokens' : 'end_turn';

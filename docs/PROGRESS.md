@@ -135,6 +135,15 @@ Prit asked for every worst case, not only the spec's three drills. All against t
 - [ ] Exit: the browser shows "Request sent" in under 2 seconds for Prit's submission
 - [ ] 0.2 routine
 
+## AI provider chain checklist (done, 2026-10-06)
+
+- [x] Prit approved: download a local model and build the chain; phone AI later as a separate project
+- [x] qwen3:4b (2.5 GB) on D: (C: had 10 GB free); Ollama at below-normal priority; whole model on the graphics card
+- [x] `scripts/lib/ai-chain.mjs` with ollama, claude-code, openai-compatible and anthropic providers; bridge, eval, doctor, demo and check:env updated; 8 chain tests (72 tests in total)
+- [x] Eval: Claude 9/9 tiers, 8/9 guard, 6 to 10 s; qwen3:4b 9/9 tiers, 9/9 guard, 4.5 to 6.5 s; PC load measured (processor 30% average)
+- [x] Live: leads answered by qwen3:4b; Ollama off: Claude answered; no AI: human fallback with the reason in Slack
+- [x] Recorded in DECISIONS (AI provider chain)
+
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |

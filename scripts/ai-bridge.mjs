@@ -7,7 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, parseEnv } from 'node:util';
-import { providerConfigProblem, providersFromEnv, runChain } from './lib/ai-chain.mjs';
+import { ollamaPreload, providerConfigProblem, providersFromEnv, runChain } from './lib/ai-chain.mjs';
 import { parseMessagesRequest } from './lib/claude-cli.mjs';
 
 const envPath = fileURLToPath(new URL('../.env', import.meta.url));
@@ -23,9 +23,11 @@ const MAX_QUEUED = 20;
 // The whole chain must answer before n8n's HTTP Request timeout (45 s, one try), so the workflow
 // gets a clean error instead of timing out while a provider is still working.
 const BUDGET_MS = 40000;
+// `--providers ollama,claude-code` overrides AI_PROVIDERS for this run (handy for drills).
+const { values: cliProviders } = parseArgs({ strict: false, options: { providers: { type: 'string' } } });
 let PROVIDERS;
 try {
-  PROVIDERS = providersFromEnv(env);
+  PROVIDERS = providersFromEnv(cliProviders.providers ? { AI_PROVIDERS: cliProviders.providers } : env);
 } catch (err) {
   console.error(err.message);
   process.exit(1);
@@ -34,7 +36,7 @@ try {
 // Failure drills (Phase 6): npm run ai:bridge -- --drill slow|error|garbage|refusal
 // slow: never answers (Claude stuck); error: 529 overloaded; garbage: 200 with text that is not JSON;
 // refusal: 200 with stop_reason "refusal". No Claude call is made in drill mode.
-const { values: cli } = parseArgs({ options: { drill: { type: 'string', default: '' } } });
+const { values: cli } = parseArgs({ options: { drill: { type: 'string', default: '' }, providers: { type: 'string' } } });
 const DRILL = cli.drill;
 if (DRILL && !['slow', 'error', 'garbage', 'refusal'].includes(DRILL)) {
   console.error('Unknown drill. Use slow, error, garbage or refusal.');
@@ -180,4 +182,26 @@ server.listen(PORT, HOST, () => {
   if (DRILL) console.log(`DRILL MODE: ${DRILL}. No real AI calls. Stop with Ctrl+C and start normally afterwards.`);
   if (PROVIDERS.includes('claude-code')) console.log(`Claude login: ${OAUTH_TOKEN ? 'CLAUDE_CODE_OAUTH_TOKEN from .env' : 'your normal Claude Code login'}.`);
   console.log('Press Ctrl+C to stop.');
+  if (USE_OLLAMA && !DRILL) warmOllama();
 });
+
+// The local model takes 7 to 50 s to load onto the graphics card, which would make the first lead
+// fall through to the next AI. Load it now, keep it loaded while the bridge runs, and free the
+// graphics memory again when the bridge stops.
+const USE_OLLAMA = PROVIDERS.includes('ollama') && !providerConfigProblem('ollama', env);
+async function warmOllama() {
+  try {
+    const seconds = await ollamaPreload(env);
+    console.log(`Local AI ready: ${env.OLLAMA_MODEL} loaded on the graphics card in ${seconds.toFixed(1)}s.`);
+  } catch (err) {
+    console.log(`Local AI not ready (${err.message}). Leads will use the next AI in the chain until Ollama is running.`);
+  }
+}
+if (USE_OLLAMA && !DRILL) setInterval(warmOllama, 50 * 60 * 1000).unref();
+
+async function shutdown() {
+  if (USE_OLLAMA) await ollamaPreload(env, 0, 5000).catch(() => {});
+  process.exit(0);
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
