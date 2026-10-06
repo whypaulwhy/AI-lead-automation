@@ -6,6 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), 'utf8');
 const config = JSON.parse(read('config/business.json'));
+const PAGES = ['site/index.html', 'site/privacy.html', 'site/terms.html'];
 const html = read('site/index.html');
 const { banned_phrases: bannedPhrases, banned_characters: bannedCharacters } = config.copy_rules;
 
@@ -37,8 +38,16 @@ function problems(text) {
   ];
 }
 
-test('landing page visible text follows the copy rules', () => {
-  assert.deepEqual(problems(visibleText(html)), []);
+test('visible text on every page follows the copy rules', () => {
+  for (const page of PAGES) assert.deepEqual(problems(visibleText(read(page))), [], page);
+});
+
+test('every page links the privacy policy and terms of use', () => {
+  for (const page of PAGES) {
+    const source = read(page);
+    assert.match(source, /href="privacy\.html"/, page);
+    assert.match(source, /href="terms\.html"/, page);
+  }
 });
 
 test('every email template follows the copy rules', () => {
@@ -67,12 +76,15 @@ test('form service options match config.form_services', () => {
   assert.deepEqual(Object.fromEntries(options), config.form_services);
 });
 
-test('the page says the company is fictional and uses only 555-01xx phone numbers', () => {
-  const text = visibleText(html);
-  assert.match(text, /fictional company created for a portfolio demo/);
-  const shown = [...text.matchAll(/\(\d{3}\) \d{3}-\d{4}/g)].map((m) => m[0]);
-  const dialed = [...html.matchAll(/href="tel:([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(shown.length > 0 && dialed.length > 0);
-  for (const number of shown) assert.match(number, /^\(\d{3}\) 555-01\d{2}$/);
-  for (const number of dialed) assert.match(number, /^\+1\d{3}55501\d{2}$/);
+test('every page says the company is fictional and uses only 555-01xx phone numbers', () => {
+  for (const page of PAGES) {
+    const source = read(page);
+    const text = visibleText(source);
+    assert.match(text, /fictional company created for a portfolio demo/, page);
+    const shown = [...text.matchAll(/\(\d{3}\) \d{3}-\d{4}/g)].map((m) => m[0]);
+    const dialed = [...source.matchAll(/href="tel:([^"]+)"/g)].map((m) => m[1]);
+    assert.ok(shown.length > 0 && dialed.length > 0, page);
+    for (const number of shown) assert.match(number, /^\(\d{3}\) 555-01\d{2}$/, page);
+    for (const number of dialed) assert.match(number, /^\+1\d{3}55501\d{2}$/, page);
+  }
 });

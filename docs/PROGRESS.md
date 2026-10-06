@@ -4,9 +4,9 @@
 |---|---|---|
 | 0. Preflight and repo skeleton | done | 2026-10-05 |
 | 1. n8n running locally | done | 2026-10-05 |
-| 2. Accounts and credentials | in progress: Prit creates accounts | |
-| 3. Landing page | in progress (parallel with Phase 2, allowed by Section 12) | |
-| 4. Claude contract, logic and tests | not started | |
+| 2. Accounts and credentials | done | 2026-10-06 |
+| 3. Landing page | reworked 2026-10-06 after Prit's review; waiting for his approval | |
+| 4. Claude contract, logic and tests | in progress | |
 | 5. Workflows | not started | |
 | 6. Error handling and failure drills | not started | |
 | 7. Full end-to-end run | not started | |
@@ -54,16 +54,16 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: Docker, container and volume explained in 3 sentences
 - [x] 0.2 routine
 
-## Phase 2 checklist (in progress)
+## Phase 2 checklist (done)
 
 - [x] T1 `docs/CREDENTIALS_SETUP.md` written from Section 14, adapted (no Anthropic account; credentials by script)
 - [x] Added: `npm run setup:credentials` (n8n API) and `npm run check:env`
 - [x] "AI bridge token" credential created through the API; `N8N_CRED_AI_BRIDGE_ID` set
-- [ ] Prit: guide steps A to H (Gmail x2, sheet, Google robot account, Slack, Cal.com, five `.env` lines, `setup:credentials`)
-- [ ] T2 every `.env` value `set` (`npm run check:env` says "All good.")
-- [ ] T2 ask permission, post "Setup check from the Lead Responder build" to Slack, confirm HTTP 200
-- [ ] Exit: sheet has the 24 headers in A1:X1 and is shared as Editor (checked by `setup:credentials`)
-- [ ] 0.2 routine
+- [x] Prit: guide steps A to H done (Slack step rewritten for the new "Blank app" dialog)
+- [x] T2 every `.env` value set; `npm run check:env` says "All good."; n8n credential tests: Gmail OK, Google Sheets OK (bridge has no test function; proven in Phase 1)
+- [x] T2 Prit approved; Slack answered 200 ok
+- [x] Exit: sheet tab "Leads" has the 24 headers in A1:X1; the robot account wrote them, so it has Editor access
+- [x] 0.2 routine
 
 ## Phase 3 checklist (in progress, parallel with Phase 2)
 
@@ -72,7 +72,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] T3 served with `npm run site`; checked in the browser pane at 360, 375, 768, 1280 px. Self-critique fixes: headline no longer splits "storm-damaged", balanced headline lines, larger gable, "How it works" changed from four equal columns (a stock template pattern) to job-sheet rows
 - [x] T4 `tests/copy.test.js` passes: page text, 6 templates, customer config strings, form options match config, fiction disclaimer and 555-01xx numbers
 - [x] Form behavior checked: empty submit shows the 6 exact spec messages, focus to first invalid, `aria-describedby` linked, live region announces; errors clear while fixing; server 400 errors shown under the field; success panel replaces the form and takes focus; network failure keeps all typed values
-- [ ] Prit: open http://localhost:8080 on desktop and phone width, try the form with the keyboard only, say what feels off
+- [x] Prit reviewed v1 (2026-10-06): read as AI-generated. Reworked per his list (DECISIONS, Phase 3 rework): paper background, square corners, cedar accent, sample inspection notes, privacy policy and terms, local detail. Rechecked at 360 and 1280 px, form validation, no console errors
 - [x] Exit 8.6: visible labels, required stated in words, one polite live region, visible focus (slate ring, yellow on slate bands), DOM-order keyboard flow (honeypot skipped), 44px targets (inline text links exempt), no horizontal scroll at 360
 - [ ] Exit 8.6 "no console errors": the only errors are the CORS failure because the webhook does not exist yet; recheck in Phase 5 after the webhook with Allowed Origins is deployed
 - [x] Exit: copy test passes

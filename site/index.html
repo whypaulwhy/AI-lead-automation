@@ -9,7 +9,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&amp;display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&amp;family=Barlow:wght@400;600;700&amp;display=swap">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
   <script src="app.js" defer></script>
@@ -19,18 +19,19 @@
 
   <header class="site-header">
     <div class="wrap header-inner">
-      <a class="wordmark" href="./">Cedar &amp; Slate Roofing</a>
-      <a class="header-phone" href="tel:+15125550147">(512) 555-0147</a>
+      <a class="brand" href="./">
+        <svg class="brand-mark" viewBox="0 0 40 26" width="40" height="26" aria-hidden="true" focusable="false">
+          <polyline points="3,15 20,4 37,15"></polyline>
+          <line x1="8" y1="22" x2="32" y2="22"></line>
+        </svg>
+        <span>Cedar &amp; Slate Roofing</span>
+      </a>
+      <div class="header-contact">
+        <a class="header-phone" href="tel:+15125550147">(512) 555-0147</a>
+        <span class="header-hours">Mon to Fri, 7:30 to 5</span>
+      </div>
     </div>
   </header>
-
-  <div class="roofline" aria-hidden="true">
-    <span class="roofline-run roofline-lead"></span>
-    <svg class="roofline-gable" viewBox="0 0 220 36" width="220" height="36" focusable="false">
-      <polyline points="0,34.5 110,4 220,34.5"></polyline>
-    </svg>
-    <span class="roofline-run"></span>
-  </div>
 
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
@@ -38,16 +39,21 @@
         <div class="hero-intro">
           <h1 id="hero-title">Roof leaking or <span class="nowrap">storm-damaged?</span> We'll come look this week.</h1>
           <p class="lead">We're a small roofing crew working on homes across Austin. Tell us what's going on and you'll hear back from Dana in our office within a few minutes.</p>
+          <p class="urgent">Water coming in right now? Call <a href="tel:+15125550147">(512) 555-0147</a>.</p>
         </div>
 
-        <ul class="hero-points">
-          <li>Free inspections with photos and a written estimate</li>
-          <li>Help with insurance claims after hail and wind</li>
-          <li>Homes only, in Austin and West Lake Hills</li>
-        </ul>
+        <div class="hero-next">
+          <h2 class="small-heading" id="next-title">What happens after you send the form</h2>
+          <ol class="steps" aria-labelledby="next-title">
+            <li>Dana replies by email with times for a free inspection.</li>
+            <li>Marco, our estimator, inspects the roof and takes photos.</li>
+            <li>You get his notes, the photos and a written estimate.</li>
+            <li>You decide. We don't do pressure calls.</li>
+          </ol>
+        </div>
 
         <div class="hero-form" id="request" tabindex="-1">
-          <div class="form-card">
+          <div class="form-panel">
             <div id="form-area">
               <h2 class="form-title" id="form-title">Request a free inspection</h2>
               <p class="form-note">All fields are required unless marked optional.</p>
@@ -119,6 +125,7 @@
                 <p class="form-error" id="form-error" hidden>We couldn't send that. Check your connection and try again, or call <a href="tel:+15125550147">(512) 555-0147</a>.</p>
 
                 <button class="button" type="submit" data-busy-label="Sending...">Send my request</button>
+                <p class="fineprint">We only use these details to answer your request. See our <a href="privacy.html">privacy policy</a>.</p>
               </form>
             </div>
 
@@ -136,17 +143,17 @@
       </div>
     </section>
 
-    <section class="band band-mist" aria-labelledby="work-title">
-      <div class="wrap">
+    <section class="section" aria-labelledby="work-title">
+      <div class="wrap section-grid">
         <h2 id="work-title">What we work on</h2>
-        <dl class="services">
+        <dl class="rows services">
           <div>
             <dt>Leaks</dt>
             <dd>We find where the water actually gets in, which is often not right above the stain.</dd>
           </div>
           <div>
             <dt>Storm and hail damage</dt>
-            <dd>We document damage with photos you can send to your insurance company.</dd>
+            <dd>We document damage with photos you can send to your insurance company, and we can meet your adjuster on site.</dd>
           </div>
           <div>
             <dt>Repairs</dt>
@@ -164,32 +171,74 @@
       </div>
     </section>
 
-    <section class="band" aria-labelledby="how-title">
-      <div class="wrap">
-        <h2 id="how-title">How it works</h2>
-        <ol class="steps" role="list">
-          <li>Send the form.</li>
-          <li>Dana replies with times for a free inspection.</li>
-          <li>We inspect, take photos, and send a written estimate.</li>
-          <li>You decide. We don't do pressure calls.</li>
-        </ol>
+    <section class="section" aria-labelledby="inspection-title">
+      <div class="wrap section-grid">
+        <h2 id="inspection-title">What you get from an inspection</h2>
+        <div class="section-body">
+          <p>An inspection takes about 30 minutes. Marco checks every slope, the flashing and vents, and the attic if he can get to it. Afterwards you get his notes, every photo he took, and a written estimate. This is what the notes look like, from a typical call after a hailstorm.</p>
+
+          <article class="sheet" aria-labelledby="sheet-title">
+            <header class="sheet-head">
+              <h3 id="sheet-title">Inspection notes <span class="sheet-tag">(sample)</span></h3>
+              <dl class="sheet-facts">
+                <div><dt>House</dt><dd>One-story ranch in Allandale, built in 1964</dd></div>
+                <div><dt>Roof</dt><dd>Asphalt shingle, about 17 years old</dd></div>
+                <div><dt>Why we came out</dt><dd>Brown stain on the hallway ceiling after the April hail</dd></div>
+                <div><dt>Photos</dt><dd>26, all sent with the estimate</dd></div>
+              </dl>
+            </header>
+            <ul class="findings">
+              <li>
+                <p class="finding-area">Plumbing vent above the hallway</p>
+                <div class="finding-text">
+                  <p><span class="finding-label">Found:</span> The rubber boot around the pipe has split, and the decking under it is soft. This is where the stain comes from.</p>
+                  <p><span class="finding-label">What we'd do:</span> Replace the boot and one sheet of decking. A small repair, about two hours.</p>
+                </div>
+              </li>
+              <li>
+                <p class="finding-area">North and west slopes</p>
+                <div class="finding-text">
+                  <p><span class="finding-label">Found:</span> Hail bruises on about 30 shingles, with granules washed into the gutters.</p>
+                  <p><span class="finding-label">What we'd do:</span> Mark and photograph each hit for your adjuster. If the claim is approved, replace both slopes.</p>
+                </div>
+              </li>
+              <li>
+                <p class="finding-area">Ridge cap</p>
+                <div class="finding-text">
+                  <p><span class="finding-label">Found:</span> Two cap shingles lifted at the east end.</p>
+                  <p><span class="finding-label">What we'd do:</span> Re-nail and seal them during the vent repair.</p>
+                </div>
+              </li>
+              <li>
+                <p class="finding-area">Attic</p>
+                <div class="finding-text">
+                  <p><span class="finding-label">Found:</span> Dry apart from the spot under the vent. Ventilation looks fine.</p>
+                  <p><span class="finding-label">What we'd do:</span> Nothing needed.</p>
+                </div>
+              </li>
+            </ul>
+          </article>
+        </div>
       </div>
     </section>
 
-    <section class="band band-mist" aria-labelledby="area-title">
-      <div class="wrap">
+    <section class="section" aria-labelledby="area-title">
+      <div class="wrap section-grid">
         <h2 id="area-title">Where we work</h2>
-        <p>Austin and West Lake Hills. Not sure if we cover you? Put your ZIP in <a href="#request">the form</a> and we'll tell you.</p>
+        <div class="section-body">
+          <p>Homes in Austin and West Lake Hills. Most of our jobs are in Travis Heights, Bouldin Creek, Zilker, Barton Hills, Tarrytown, Clarksville, Hyde Park, Allandale, Crestview, Brentwood, Mueller, Windsor Park and East Austin.</p>
+          <p>Not sure if we cover you? Put your ZIP in <a href="#request">the form</a> and we'll tell you.</p>
+        </div>
       </div>
     </section>
 
-    <section class="band" aria-labelledby="faq-title">
-      <div class="wrap">
+    <section class="section" aria-labelledby="faq-title">
+      <div class="wrap section-grid">
         <h2 id="faq-title">Questions</h2>
         <div class="faq">
           <details>
             <summary>Is the inspection really free?</summary>
-            <p>Yes. You get photos and a written estimate either way.</p>
+            <p>Yes. You get the notes, photos and a written estimate either way, and you don't owe us anything if you decide not to go ahead.</p>
           </details>
           <details>
             <summary>Do you work with insurance?</summary>
@@ -199,15 +248,38 @@
             <summary>What if water is coming in right now?</summary>
             <p>Call <a href="tel:+15125550147">(512) 555-0147</a>. We can usually get a tarp on it the same day.</p>
           </details>
+          <details>
+            <summary>How long does a new roof take?</summary>
+            <p>Most houses take one or two days once the materials are delivered. We tell you the start date and how many days to expect before we begin.</p>
+          </details>
+          <details>
+            <summary>Do you clean up after the job?</summary>
+            <p>Yes. We cover plants and the AC unit before we start, haul away the old roof, and run a magnet over the yard and driveway for nails before we leave.</p>
+          </details>
+          <details>
+            <summary>Do you do gutters or commercial buildings?</summary>
+            <p>Gutters only as part of a roof job, and homes only. For either of those on their own, a specialist will serve you better.</p>
+          </details>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="wrap footer-inner">
-      <p class="footer-name">Cedar &amp; Slate Roofing</p>
-      <p>Cedar &amp; Slate Roofing is a fictional company created for a portfolio demo. Phone numbers use the 555 range reserved for fiction. Demo built by Prit.</p>
+    <div class="wrap footer-grid">
+      <div>
+        <p class="footer-name">Cedar &amp; Slate Roofing</p>
+        <p>East Austin, Texas<br>
+          <a href="tel:+15125550147">(512) 555-0147</a><br>
+          Office hours Monday to Friday, 7:30 to 5. Saturday inspections by appointment.</p>
+      </div>
+      <div>
+        <ul class="footer-links">
+          <li><a href="privacy.html">Privacy policy</a></li>
+          <li><a href="terms.html">Terms of use</a></li>
+        </ul>
+        <p class="footer-note">Cedar &amp; Slate Roofing is a fictional company created for a portfolio demo. Phone numbers use the 555 range reserved for fiction. Demo built by Prit.</p>
+      </div>
     </div>
   </footer>
 </body>

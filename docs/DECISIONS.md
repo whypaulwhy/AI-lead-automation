@@ -30,7 +30,44 @@ One line per deviation from `docs/BUILD_SPEC.md`: what changed, and why.
 - **Added `npm run check:env`.** Why: Phase 2 task 2 ("every .env variable prints set") as a command Prit can run himself; it also flags malformed values without printing them.
 - **Section 14 B (Anthropic API key) and the "Anthropic API key" credential are dropped in bridge mode.** Why: see Phase 0 bridge decision.
 - **`SHEET_COLUMNS` lives in `src/logic/row.js` now.** Why: the setup script and Phase 4's `buildSheetRow` must use the same 24 columns.
-- **Slack app: "Blank app" instead of "From scratch" (2026-10-06).** Why: Slack's "Create new app" dialog now offers AI agent, Starter app, From a manifest and Blank app; Blank app is the old "From scratch". Button names follow Slack's current incoming-webhooks docs ("Activate Incoming Webhooks", "Authorize").
+- **Slack app: "Blank app" instead of "From scratch" (2026-10-06).** Why: see below.
+
+## Phase 3 rework (2026-10-06)
+
+Prit reviewed the first version and said it read as AI-generated. His list of tells to avoid: harsh gradients, Lucide icons, pure white background, rainbow coloring, drop shadows, 3 feature cards in a row, emojis, liquid glass, em dashes, Inter/Geist/Space Grotesk, colored left stripe, fake testimonials, bento grids, terminal windows, "It's not X, it's Y", checkmark bullets, 3 pricing tiers, no real product demo, soft corner radius, purple and black, no skeleton loaders, radial orbs, dot grids, sparkle icons, animated arrows, no terms of use, no privacy policy, hover animations, neon colors, basic pastel colors. This overrides spec 8.2 and 8.4 where they conflict.
+
+New design plan. Guiding principle: a printed estimate from a local trade business. Specific facts, ruled lines, nothing decorative.
+- Palette from the company name: slate `#25313A` (text, rules, footer), slate-soft `#55626C` (secondary, 5.5:1 on paper), paper `#F1F1EE` page (not white, not cream), panel `#FAFAF8` for the form and sample sheet, white only inside inputs, cedar `#7A3E1F` as the one accent (button 8:1 with white text, brand mark, finding labels), error `#B42318`, success `#1F7A4D`.
+- Type: Barlow Condensed 600 for headings (truck-lettering feel), Barlow 400/600/700 for text.
+- Square corners everywhere. No shadows, transitions or animations; hover only darkens the button or thickens an underline.
+- Layout: header on paper with a rule and a small roof mark (replaces the page-wide yellow roofline). Hero: headline, one paragraph, an emergency call line, and "What happens after you send the form" in the left column; form on the right. Below: brochure-style sections on one background, each with a full rule, heading left (4/12) and content right (8/12).
+
+```
+Desktop                                          Mobile (360)
+ [mark] Cedar & Slate Roofing   (512) 555-0147    Cedar & Slate Roofing  (512)...
+ ______________________________ Mon to Fri ____   __________________________
+ H1                              +-----------+    H1
+ paragraph                       | form      |    paragraph
+ Water coming in? Call ...       |           |    Water coming in? Call ...
+ What happens after you send     |           |    +----------------------+
+ 1 ... 2 ... 3 ... 4 ...         +-----------+    | form                 |
+ ______________________________________________   +----------------------+
+ What we work on       | rows                      What happens 1..4
+ What you get from     | paragraph + sample sheet  sections stack, rules between
+ an inspection         |                           footer
+ Where we work | Questions (6) | footer with Privacy and Terms
+```
+
+Changes to the spec copy and structure, each to remove a tell or add something real:
+- The hero's three bullets are gone (rule-of-three pattern); their facts moved into the sections. Added "Water coming in right now? Call (512) 555-0147."
+- "How it works" became "What happens after you send the form", moved into the hero's left column. Step 1 ("Send the form.") dropped since the heading says it; the estimator is named (Marco).
+- Added "What you get from an inspection" with a sample of the inspection notes the homeowner receives. This is the real product demo: the deliverable, labeled "(sample)", with no prices, ratings or claims.
+- "Where we work" lists 13 real Austin neighborhoods whose ZIPs are in `service_area_zips`.
+- FAQ grew from 3 to 6 items (new roof duration, cleanup, gutters and commercial); the free-inspection answer now says there's nothing owed.
+- Added `privacy.html` and `terms.html`, linked from every footer and from a line under the submit button. The privacy policy describes the actual demo data flow (n8n, Claude, Gmail, Sheets, Slack, Cal.com, Google Fonts) and offers deletion by replying to any email. The footer adds the location (East Austin, no street address) and office hours.
+- The success panel no longer fades in.
+- Skeleton loaders: not applicable. Nothing on the page loads after it opens; the only wait is the form submit, which shows "Sending..." and an announced busy state.
+- `tests/copy.test.js` now checks all three pages, and that each links both legal pages. Why: Slack's "Create new app" dialog now offers AI agent, Starter app, From a manifest and Blank app; Blank app is the old "From scratch". Button names follow Slack's current incoming-webhooks docs ("Activate Incoming Webhooks", "Authorize").
 
 ## Phase 3 design plan (2026-10-05)
 
