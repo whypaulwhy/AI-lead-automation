@@ -14,12 +14,13 @@
     "ai:bridge": "node scripts/ai-bridge.mjs",
     "site": "npx --yes serve@14.2.6 site -l 8080 --no-clipboard",
     "build": "node scripts/build.mjs",
-    "deploy": "node scripts/build.mjs && node scripts/deploy.mjs",
+    "deploy": "node scripts/deploy.mjs",
     "test": "node --test",
     "eval:prompt": "node scripts/eval-prompt.mjs",
     "send:test": "node scripts/send-test-leads.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:env": "node scripts/check-env.mjs",
-    "setup:credentials": "node scripts/setup-credentials.mjs"
+    "setup:credentials": "node scripts/setup-credentials.mjs",
+    "validate": "node scripts/build.mjs && node scripts/validate-workflows.mjs"
   }
 }

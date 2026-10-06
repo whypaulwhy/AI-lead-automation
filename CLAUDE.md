@@ -65,6 +65,9 @@ REST APIs. New to n8n, Docker, Node tooling, Google Cloud and Slack apps.
 | `npm run eval:prompt` | Call Claude directly on the fixtures and check tiers and copy rules |
 | `npm run send:test` | Post fixture leads to the live webhook (`-- --only id1,id2` to filter) |
 | `npm run check:secrets` | Fail if any secret pattern or `.env` value appears in tracked files |
+| `npm run check:env` | Print `set` / `missing` for every `.env` value (never the values) |
+| `npm run setup:credentials` | Create the n8n credentials through the API and write their IDs into `.env` |
+| `npm run validate` | Build, then check both workflows against the node definitions inside the running n8n (stands in for n8n-mcp) |
 
 ## Map
 

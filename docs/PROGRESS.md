@@ -26,7 +26,7 @@ only with evidence. The checklist for a phase is added when that phase starts.
 | 0.4 Teaching mode | New concepts in 3 sentences or fewer; numbered manual steps with what success looks like | Every phase summary |
 | 0.5 Secrets | Never shown, logged or committed; report `set` or `missing` | Generated values go straight into `.env`; `check:secrets` before every commit and push |
 | 0.6 Email safety | Test mail only to plus-addresses of `TEST_INBOX` | Enforced in `send-test-leads.mjs` (Phase 5) |
-| 0.7 n8n accuracy | No guessed node types, versions or parameters | n8n-mcp if registered, else docs.n8n.io for 2.41.6, else node JSON exported from the editor. n8n-mcp: not registered yet |
+| 0.7 n8n accuracy | No guessed node types, versions or parameters | n8n-mcp not registered; definitions read from the running n8n 2.41.6 and enforced by `npm run validate` |
 | 0.8 New sessions | Read CLAUDE.md, PROGRESS, needed spec sections | CLAUDE.md lists them, plus DECISIONS.md |
 
 ## Phase 0 checklist (done)
@@ -90,13 +90,25 @@ only with evidence. The checklist for a phase is added when that phase starts.
 - [x] Exit: tone approved by Prit on 2026-10-06 ("yes fix the gutter line, continue to phase 5"). Fix applied: the not_fit_service closing line is now "Hope you find someone good for it." and, for the same double-"Sorry" reason, the not_fit_area closing line is "Good luck getting it fixed."
 - [x] 0.2 routine
 
+## Phase 5 checklist (in progress)
+
+- [x] T1 exact node types, versions and parameters taken from the running n8n 2.41.6 (see DECISIONS, Phase 5)
+- [x] T2 `workflows/lead-responder.template.json` (21 nodes, 5 sticky notes), `workflows/error-alerts.template.json`, 8 `src/n8n/*.entry.js` files
+- [x] T3 `scripts/build.mjs`, `scripts/deploy.mjs`, `scripts/validate-workflows.mjs`; validation: no problems; both workflows deployed, main workflow published
+- [x] T4 `scripts/send-test-leads.mjs`; smoke test `austin_active_leak`: HTTP 200 in 660 ms, execution #1 success, tier hot, Gmail accepted the reply, Slack answered ok, sheet row has all 24 columns
+- [x] Added: CORS checked from the real page (browser reads the 400 field errors); preflight allows only http://localhost:8080
+- [x] Exit: validation has zero errors
+- [x] Exit: smoke test produced a reply email, a Slack alert and a sheet row; execution status success
+- [ ] Prit: open the workflow in n8n and look at the canvas (walkthrough of the five sections); check the inbox, Slack and the sheet for the Maria lead
+- [ ] 0.2 routine
+
 ## Definition of Done tracker (BUILD_SPEC 13.5)
 
 | ID | Criterion (short) | Status |
 |---|---|---|
 | AC-01 | `npm test` passes | passing (58 tests) |
 | AC-02 | Eval passes, at least 8 of 9 without fallback, tone approved | passing (9 of 9; tone approved 2026-10-06) |
-| AC-03 | Both workflows validate, main workflow published | pending (Phase 5) |
+| AC-03 | Both workflows validate, main workflow published | passing (2026-10-06) |
 | AC-04 | Real form: "Request sent" under 2 s, reply under 60 s, Slack, 24-column row | pending (Phase 7) |
 | AC-05 | `send:test` matches 13.1 for all 11 fixtures | pending (Phase 7) |
 | AC-06 | Three failure drills pass, environment restored | pending (Phase 6) |

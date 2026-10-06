@@ -1,0 +1,1069 @@
+{
+  "name": "Lead Responder: Cedar & Slate (demo)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 1. Intake and validation\nThe website form posts here. Every field is checked the same way the page checks it, the browser gets its answer right away, and bots that fill the hidden field are quietly accepted and dropped.",
+        "height": 620,
+        "width": 1180,
+        "color": 7
+      },
+      "id": "aa890e55-2194-446e-a7db-4edc8913e940",
+      "name": "Note: intake",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. Claude reads the lead\nOnly the service picked, the ZIP code, whether a phone was given, and the message go to Claude. Name, email and phone stay here. If Claude fails, the fallback sends a plain acknowledgement and flags the lead for a person.",
+        "height": 620,
+        "width": 900,
+        "color": 7
+      },
+      "id": "d3425366-e9fe-443e-a090-ef84980b9709",
+      "name": "Note: claude",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1140,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Reply to the customer\nSends the plain-text reply from Dana. Spam gets no reply. If sending fails, the run carries on and the failure is written to the log.",
+        "height": 620,
+        "width": 640,
+        "color": 7
+      },
+      "id": "a04acff7-53b0-430f-a082-8e434c8354eb",
+      "name": "Note: reply",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2060,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 4. Alert the team\nHot and warm leads, and any lead Claude could not read, go to Slack with a link to the lead log.",
+        "height": 620,
+        "width": 880,
+        "color": 7
+      },
+      "id": "66a66301-0ba3-4809-ad2e-eff82974f413",
+      "name": "Note: alert",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 5. Log every lead\nEvery real lead becomes one row in the Google Sheet: score, tier, why, and what was sent.",
+        "height": 620,
+        "width": 500,
+        "color": 7
+      },
+      "id": "aa887cac-5562-463d-a9f2-d12a564aa865",
+      "name": "Note: log",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3620,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "%%SITE_ORIGIN%%"
+        }
+      },
+      "id": "89372e18-5454-4d32-a05b-1ad2f4b513ec",
+      "name": "Website form",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "8b33758f-673b-49eb-ac56-8ab17f96a298"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:business-config%%"
+      },
+      "id": "bc267463-2911-478a-aea3-09eec2ff14c9",
+      "name": "Business config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:clean-and-validate%%"
+      },
+      "id": "6fe926d2-7f14-4bf7-a84f-dc1a9b0fe0cf",
+      "name": "Clean and validate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9b31a43e-2e9a-4255-a6c5-ecbb450ceb9f",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "ok",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ok"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8230a6bd-49a8-4f28-a1e2-aad1f57327d3",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "invalid",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "invalid"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "eae41b8e-5f7d-4e5a-a2aa-37404c9da31a",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "bot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "bot"
+            }
+          ]
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "9026013c-17ca-499a-a5f8-8b821615b0f5",
+      "name": "Route submission",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, lead_id: $json.lead.lead_id }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "dd174635-3955-4002-a458-d2e9bde49d40",
+      "name": "Reply: received",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        900,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, errors: $json.errors }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "96dbf3c5-4b22-4de4-ae76-49f76ffd4526",
+      "name": "Reply: invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        900,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": true }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "853afc11-5a98-4d2c-a852-fafea9920d86",
+      "name": "Reply: bot",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        900,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:build-ai-request%%"
+      },
+      "id": "992e91ff-60d0-4721-a33e-1b562b85de3c",
+      "name": "Build AI request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "%%AI_URL%%",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.ai_request) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fc1ca247-83dd-4ff4-a199-9b2b232ff53f",
+      "name": "Read lead with Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1400,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "%%AI_CRED_ID%%",
+          "name": "%%AI_CRED_NAME%%"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:score-and-write-reply%%"
+      },
+      "id": "ad9c4ea6-0989-4722-a34b-9a49a1b9c266",
+      "name": "Score and write reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:fallback-reply%%"
+      },
+      "id": "5ef691ec-fd74-4fd5-aa63-a1593ff8fd6c",
+      "name": "Fallback reply (AI failed)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f7c990cb-c155-496f-a216-fb416effe21e",
+      "name": "Lead result",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d5dbc7b9-bb7f-4d9c-ae10-4d44c9e69652",
+              "leftValue": "={{ $('Lead result').first().json.email !== null }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "c8a876c9-6250-40d5-a37c-a65357957897",
+      "name": "Should we email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "%%FROM_HEADER%%",
+        "toEmail": "={{ $('Lead result').first().json.email.to }}",
+        "subject": "={{ $('Lead result').first().json.email.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $('Lead result').first().json.email.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "269cd615-2981-4f4f-a803-7996c7a36af9",
+      "name": "Send reply email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2360,
+        200
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "%%N8N_CRED_SMTP_ID%%",
+          "name": "Gmail SMTP (demo sender)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "id": "99f0c6e6-61a3-4133-af8a-83a5f3bf139f",
+      "name": "Email failed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "64d919af-5a12-4f93-af9b-b8485a3cd364",
+              "leftValue": "={{ $('Lead result').first().json.slack_alert }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": false,
+        "options": {}
+      },
+      "id": "d4430516-7c3f-4933-a5e2-4aa22951aca2",
+      "name": "Should we alert the team?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:write-slack-message%%"
+      },
+      "id": "c9cdce96-a157-45f8-a66d-3f3dad671c13",
+      "name": "Write Slack message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "%%SLACK_WEBHOOK_URL%%",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.slack_text }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "598c3d0a-005d-401c-af3c-36f99a11f56b",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3220,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "id": "107683b3-9a99-44db-aacc-fbdee94abded",
+      "name": "Slack failed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:build-sheet-row%%"
+      },
+      "id": "217ba0e9-cdf2-4565-a30b-064dd878534d",
+      "name": "Build sheet row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "resource": "sheet",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "%%GOOGLE_SHEET_ID%%"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "%%GOOGLE_SHEET_TAB%%"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tier",
+              "displayName": "tier",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "zip",
+              "displayName": "zip",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "issue_summary",
+              "displayName": "issue_summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_service_category",
+              "displayName": "ai_service_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "service_selected",
+              "displayName": "service_selected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "in_service_area",
+              "displayName": "in_service_area",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decision_maker",
+              "displayName": "decision_maker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "money_signal",
+              "displayName": "money_signal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "spam_likelihood",
+              "displayName": "spam_likelihood",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_explanation",
+              "displayName": "ai_explanation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reply_subject",
+              "displayName": "reply_subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_status",
+              "displayName": "email_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "slack_status",
+              "displayName": "slack_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_status",
+              "displayName": "ai_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model",
+              "displayName": "model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "db0a2f5d-32f4-4c39-a6b5-d66db2a6ca62",
+      "name": "Log to Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3900,
+        300
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "%%N8N_CRED_GOOGLE_SHEETS_ID%%",
+          "name": "Google Sheets (service account)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Website form": {
+      "main": [
+        [
+          {
+            "node": "Business config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business config": {
+      "main": [
+        [
+          {
+            "node": "Clean and validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean and validate": {
+      "main": [
+        [
+          {
+            "node": "Route submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route submission": {
+      "main": [
+        [
+          {
+            "node": "Reply: received",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply: invalid",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply: bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply: received": {
+      "main": [
+        [
+          {
+            "node": "Build AI request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI request": {
+      "main": [
+        [
+          {
+            "node": "Read lead with Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read lead with Claude": {
+      "main": [
+        [
+          {
+            "node": "Score and write reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback reply (AI failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score and write reply": {
+      "main": [
+        [
+          {
+            "node": "Lead result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback reply (AI failed)": {
+      "main": [
+        [
+          {
+            "node": "Lead result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead result": {
+      "main": [
+        [
+          {
+            "node": "Should we email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should we email?": {
+      "main": [
+        [
+          {
+            "node": "Send reply email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Should we alert the team?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reply email": {
+      "main": [
+        [
+          {
+            "node": "Should we alert the team?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email failed": {
+      "main": [
+        [
+          {
+            "node": "Should we alert the team?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should we alert the team?": {
+      "main": [
+        [
+          {
+            "node": "Write Slack message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build sheet row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Slack message": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Slack": {
+      "main": [
+        [
+          {
+            "node": "Build sheet row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack failed": {
+      "main": [
+        [
+          {
+            "node": "Build sheet row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build sheet row": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "errorWorkflow": "%%ERROR_WORKFLOW_ID%%"
+  }
+}

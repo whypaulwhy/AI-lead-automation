@@ -1,1 +1,3 @@
-// Phase 5: Code node entry file (spec Sections 5.1 and 9).
+// Node "Business config": attaches the business config (injected at build time) to the submission.
+const config = %%CONFIG_JSON%%;
+return [{ json: { body: $input.first().json.body, config } }];

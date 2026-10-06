@@ -1,0 +1,102 @@
+{
+  "name": "Lead Responder: error alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Error alerts\nRuns when the lead workflow fails in production and posts the failed step, the error and a link to the run in Slack.",
+        "height": 400,
+        "width": 760,
+        "color": 7
+      },
+      "id": "8311fa32-1c68-4400-a426-3d41a4843d18",
+      "name": "Note: what this does",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        60
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c41138c5-af8b-48c3-a2e0-426b81964379",
+      "name": "When the lead workflow fails",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "%%CODE:format-error-alert%%"
+      },
+      "id": "da7b2337-457f-41fe-a98f-bc0362732a5c",
+      "name": "Format error alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "%%SLACK_WEBHOOK_URL%%",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: $json.slack_text }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "3fd07197-0f11-4b8d-aae2-993cd0df33da",
+      "name": "Post error to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    }
+  ],
+  "connections": {
+    "When the lead workflow fails": {
+      "main": [
+        [
+          {
+            "node": "Format error alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format error alert": {
+      "main": [
+        [
+          {
+            "node": "Post error to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Chicago",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  }
+}

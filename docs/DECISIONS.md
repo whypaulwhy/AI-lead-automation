@@ -119,3 +119,17 @@ Checked against 8.5: no gradients, blur, illustrations, emoji, icons in inputs, 
 - **`scripts/lib/config.mjs` loads config, templates, prompts and fixtures, and builds `now` for Austin time.** Why: tests, eval and (Phase 5) the build must read them the same way.
 - **Logic helpers carry a file prefix (`validateText`, `composeFill`, `scoreWeight`, ...).** Why: the build pastes several logic files into one Code node, where duplicate names would break; `build/check/all-logic.mjs` confirms all five combine and pass `node --check`.
 - **Open for Phase 5:** write sheet rows with value input option RAW so a message starting with `=` can't become a formula.
+
+## Phase 5 (2026-10-06)
+
+- **Node types, typeVersions and parameters come from the running n8n 2.41.6 itself** (`n8n-nodes-base/dist/types/nodes.json` inside the container, plus the filter and resource-mapper code in `n8n-workflow`). Why: rule 0.7 without n8n-mcp; this is more exact than docs because it is the pinned build. Versions used: Webhook 2.1, Code 2, Switch 3.4, Respond to Webhook 1.5, HTTP Request 4.5, No Operation 1, If 2.3, Send Email 2.1, Google Sheets 4.7, Error Trigger 1, Sticky Note 1.
+- **Added `scripts/validate-workflows.mjs` (`npm run validate`), run automatically by `npm run deploy`.** Why: the spec's validation step assumes n8n-mcp. This checks every node type, version, parameter name, option value, credential type and connection against those definitions, and refuses to deploy on any problem. Tested by planting three errors; all three were caught.
+- **Node 9 ("Read lead with Claude") gets its URL and credential at build time from `AI_MODE`:** bridge mode posts to `http://host.docker.internal:<AI_BRIDGE_PORT>/v1/messages` with the "AI bridge token" Header Auth credential; api mode posts to Anthropic with "Anthropic API key". Why: one template for both modes; the request body and response handling are identical.
+- **Send Email: `appendAttribution` is off.** Why: n8n 2.x adds "This email was sent automatically with n8n" to every email by default, which would expose the automation in every customer reply.
+- **Google Sheets: cell format RAW.** Why: a customer message starting with `=` is stored as text and can never run as a formula (closes the Phase 4 open item).
+- **The If nodes read `$('Lead result').first().json`, and Respond to Webhook bodies use `JSON.stringify(...)`.** Why: the shared-data rule in 9.1, and a string body is parsed the same way in every version.
+- **`settings.errorWorkflow` is a template placeholder that the build removes and the deploy fills.** Why: the error workflow's ID only exists after it is created. The error workflow is not published; error workflows run without it.
+- **Lead results from failed AI calls carry `ai_error`** (the reason, for the execution log). The "Build AI request" node also outputs `processing_started_at`.
+- **`npm run deploy` publishes through `POST /workflows/{id}/publish`.** Why: n8n 2.x renamed activate to publish; the API serves both, publish is the current term.
+- **`send-test-leads.mjs` also refuses to run when the workflow isn't published or the AI bridge isn't running, and reads tier, AI, email and Slack status from each execution.** Why: clear messages instead of silent fallbacks, and a one-screen result.
+- **`isExecuted` (spec 9.4) works in 2.41.6.** Verified by the smoke test: email_status and slack_status came out "sent".
